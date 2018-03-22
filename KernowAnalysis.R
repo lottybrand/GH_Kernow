@@ -46,6 +46,8 @@ pdRatings$R17rev <- ifelse((pdRatings$R17==1),7,
                                                       ifelse((pdRatings$R17==6),2,
                                                              ifelse((pdRatings$R17==7),1,NA)))))))
 
+pdRatings[pdRatings == 999] <- NA
+
 write.csv(pdRatings, file="pdRatings.csv")
 
 #something fishy happening when trying to get the means, argggggh
@@ -55,6 +57,19 @@ write.csv(pdRatings, file="pdRatings.csv")
 #pdRatings %>%
 #  rowwise() %>%
 #  mutate(c=mean(c(R1,R2rev,R4)))
+
+pdCols <- colnames(pdRatings)
+prestigeCols <- c(pdRatings$R1, pdRatings$R2rev, pdRatings$R4, pdRatings$R6rev, pdRatings$R8, pdRatings$R13, 
+                  pdRatings$R14, pdRatings$R15, pdRatings$R17rev)
+
+pdRatings$Psum <- rowSums(pdRatings[,c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")], na.rm = TRUE)
+
+pdRatings <- na.omit(pdRatings)
+pdRatings$Pprop <- (pdRatings$Psum - 9)/54
+
+pdRatings$Dsum <- rowSums(pdRatings[,c("R3", "R5", "R7", "R9","R10rev","R11","R12rev","R16")], na.rm = TRUE)
+pdRatings$Dprop <-(pdRatings$Dsum -8)/48
+
 
 #cronbach test stuff
 PrestigeRatings <- subset(pdRatings, select = c(R1, R2rev, R4, R6rev, R8, R13, R14, R15, R17rev))
