@@ -141,11 +141,53 @@ for (index in 1:NGroups){
 }
 pdRatings$GroupID <- GroupID
 
+#######*******************IMPORTANT*****************************************
+#######*********************************************************************
 #That worked! IMPORTANT: will have to be careful doing this as all id and group numbers have to be relative
 #to the originals for the other analyses too. Need to think about this carefully. 
+#Also not entirely sure if we do the same process for ppt ID numbers, will this still be relative to the correct group IDs?
+#Will try anyway for now and check with someone else later. 
+#FOR NOW: If we do the same process for the other dataset, once we have FIRST attributed the average pd ratings to the correct ID, then it
+#should all be relative within that dataset? 
+
+Nraters = length(unique(pdRatings$rater_id))
+OldRaterID <- pdRatings$rater_id
+RaterID <- array(0,length(pdRatings$rater_id))
+for (index in 1:Nraters){
+  RaterID[OldRaterID == unique(OldRaterID)[index]] = index
+}
+pdRatings$RaterID <- RaterID
 
 
 
+pdCorrMulti <- map2stan(
+  alist(
+    Pprop ~ dnorm(mu, sigma),
+    mu <- a + dprop*Dprop + 
+      a_p[RaterID]*sigma_p + a_g[GroupID]*sigma_g,
+    a ~ dnorm(0,10),
+    dprop ~ dnorm(0,4),
+    a_p[RaterID] ~ dnorm(0,1),
+    a_g[GroupID] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_p ~ dcauchy(0,1),
+    sigma_g ~ dcauchy(0,1)
+  ),
+  data=pdRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
 
+precis(pdCorrMulti)
 
+plot(pdRatings$Dprop ~ pdRatings$Pprop)
+cor.test(pdRatings$Dprop, pdRatings$Pprop)
+cor(pdRatings$Dprop, pdRatings$Pprop)
 
+### First need to make an average column for the pd ratings for each rated ppt. 
+### Then use the match function to assign these to the other dataframe
+
+aveP <- aggregate(pdRatings$Pprop, list(pdRatings$rated_ID), mean)
+
+#using Match!
+#scrdata$Hscore <- R3$highScore[match(scrdata$Qnum, R3$QUESTION)]
+
+pdRatings$aveP <- aveP$x[match(pdRatings$rated_ID, aveP$Group.1)]
