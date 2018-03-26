@@ -3,9 +3,10 @@ library(dplyr)
 library(psy)
 setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 
-#kresults <- read.csv("kernowResults220318.csv")
+################ FIRST REVERSE CODED THE P & D RATINGS ACCORDING TO CHENG ET AL. 2013 
+################ THEN RE-SAVED AS pdRatings.csv so this is commented out and no longer needed
 
-pdRatings <- read.csv("pdRatings.csv")
+#pdRatings <- read.csv("kernowResults220318.csv")
 
 ### Calculate p&d scores
 ### Reverse score items 2,6,10,12,17 as according to Cheng et al. 2013 (should really write a function for this..!!)
@@ -51,23 +52,18 @@ pdRatings <- read.csv("pdRatings.csv")
 # pdRatings[pdRatings == 999] <- NA
  
 
-#pdRatings$dominanceMean <- rowMeans(pdRatings[,c("R3", "R5", "R7", "R9","R10rev","R11","R12rev","R16")], na.rm = TRUE)
-#pdRatings$prestigeMean <- rowMeans(pdRatings[,c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")], na.rm = TRUE)
+# pdRatings$dominanceMean <- rowMeans(pdRatings[,c("R3", "R5", "R7", "R9","R10rev","R11","R12rev","R16")], na.rm = TRUE)
+# pdRatings$prestigeMean <- rowMeans(pdRatings[,c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")], na.rm = TRUE)
 
-
-#pdCols <- colnames(pdRatings)
-#prestigeCols <- c(pdRatings$R1, pdRatings$R2rev, pdRatings$R4, pdRatings$R6rev, pdRatings$R8, pdRatings$R13, 
-#                  pdRatings$R14, pdRatings$R15, pdRatings$R17rev)
-# 
-# pdRatings$Psum <- rowSums(pdRatings[,c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")], na.rm = TRUE)
-# 
 # pdRatings <- na.omit(pdRatings)
+
+# pdRatings$Psum <- rowSums(pdRatings[,c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")], na.rm = TRUE)
 # pdRatings$Pprop <- (pdRatings$Psum - 9)/54
 # 
 # pdRatings$Dsum <- rowSums(pdRatings[,c("R3", "R5", "R7", "R9","R10rev","R11","R12rev","R16")], na.rm = TRUE)
 # pdRatings$Dprop <-(pdRatings$Dsum -8)/48
 
-#write.csv(pdRatings, "pdRatings.csv")
+# write.csv(pdRatings, "pdRatings.csv")
 
 
 #cronbach test stuff
@@ -77,12 +73,16 @@ DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R1
 cronbach(PrestigeRatings)
 cronbach(DominanceRatings)
 
-###Now for combining with Kernow Results (IDS etc)
 
+################# Now for combining with Kernow Results (IDS etc)
+#################
+#################
+
+pdRatings <- read.csv("pdRatings.csv")
 kernowResults <- read.delim("kernow_results_26_03_18_IDS.txt")
 
 kernowResults[kernowResults == "na"] <- NA
-kernowResults <- na.omit(kernowResults)
+
 
 ### First need to make an average column for the pd ratings for each rated ppt. 
 ### Then use the match function to assign these to the other dataframe
@@ -90,20 +90,15 @@ kernowResults <- na.omit(kernowResults)
 aveP <- aggregate(pdRatings$Pprop, list(pdRatings$rated_ID), mean)
 aveD <- aggregate(pdRatings$Dprop, list(pdRatings$rated_ID), mean)
 
-#using Match!
-pdRatings$aveP <- aveP$x[match(pdRatings$rated_ID, aveP$Group.1)]
-pdRatings$aveD <- aveD$x[match(pdRatings$rated_ID, aveD$Group.1)]
-
-
+#using Match
 kernowResults$aveP <- aveP$x[match(kernowResults$ID, aveP$Group.1)]
 kernowResults$aveD <- aveD$x[match(kernowResults$ID, aveD$Group.1)]
 
-#and as ordinal...
+#and for the ordinal...
 
 meanP <- aggregate(pdRatings$prestigeMean, list(pdRatings$rated_ID), mean)
 meanD <- aggregate(pdRatings$dominanceMean, list(pdRatings$rated_ID), mean)
 
-#using Match!
 kernowResults$meanP <- meanP$x[match(kernowResults$ID, meanP$Group.1)]
 kernowResults$meanD <- meanD$x[match(kernowResults$ID, meanD$Group.1)]
 
@@ -115,96 +110,51 @@ pdRatings$Infprop <- (pdRatings$Infsum -3)/18
 aveInf <- aggregate(pdRatings$Infprop, list(pdRatings$rated_ID), mean)
 kernowResults$aveInf <- aveInf$x[match(kernowResults$ID, aveInf$Group.1)]
 
+#and for likeability ratings:
 
 pdRatings$Likesum <- rowSums(pdRatings[,c("R21", "R22")], na.rm = TRUE)
 pdRatings$Likeprop <-(pdRatings$Likesum -2)/12
 
 aveLik <- aggregate(pdRatings$Likeprop, list(pdRatings$rated_ID), mean)
 kernowResults$aveLik <- aveLik$x[match(kernowResults$ID, aveLik$Group.1)]
-
-#pdRatings <- na.omit(pdRatings)
  
 
-#hmmm what to do about scaling overconfidence... 
+#need to decide best way tos cale overconfidence.. and score?
+
 kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
-#kernowResults$oConf <- (kernowResults$Overconfidence + 40)/80 
+kernowResults$Overconfidence <- (kernowResults$Overconfidence + 40)/80
 kernowResults$oConf <- scale(kernowResults$Overconfidence)
 kernowResults$sScore <- scale(kernowResults$IndividScore)
 
+#Do we need to scale Age as well? 
 
 kernowResults$Age <- as.numeric(levels(kernowResults$Age))[as.integer(kernowResults$Age)]
 kernowResults$ageS <- scale(kernowResults$Age)
 kernowResults$Sex <- as.numeric(levels(kernowResults$Sex))[as.integer(kernowResults$Sex)]
 
+##Now write this to file
+write.csv(kernowResults, "kernowResults.csv")
+
+#some plotting
+hist(pdRatings$prestigeMean)
+hist(pdRatings$dominanceMean)
+
+hist(kernowResults$Age)
+hist(kernowResults$Overconfidence)
+hist(kernowResults$IndividScore)
+
 ############
 ########### NOW YOU CAN RE-ORDER INDECES
 ##########
 
+#kernowResults <- read.csv("kernowResults.csv")
+#pdRatings <- read.csv("pdRatings.csv")
 
-
-
-
-
-######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
-
-library(rethinking)
-
-#try single level first
-
-pdCorrelation <- map(
-  alist(
-    Pprop ~ dnorm(mu, sigma),
-    mu <- a + dprop*Dprop,  
-    a ~ dnorm(0,10),
-    dprop ~ dnorm(0,10),
-    sigma ~ dunif(0,10)
-  ),
-  data=pdRatings )
-
-precis(pdCorrelation)
-
-#okay now try adding in random effects
-
-pdCorrMulti <- map2stan(
-  alist(
-    Pprop ~ dnorm(mu, sigma),
-    mu <- a + dprop*Dprop + 
-      a_p[rater_id]*sigma_p + a_g[Group]*sigma_g,
-    a ~ dnorm(0,10),
-    dprop ~ dnorm(0,4),
-    a_p[rater_id] ~ dnorm(0,1),
-    a_g[Group] ~ dnorm(0,1),
-    sigma ~ dunif(0,10),
-    sigma_p ~ dcauchy(0,1),
-    sigma_g ~ dcauchy(0,1)
-  ),
-  data=pdRatings, constraints=list(sigma_p="lower=0"),
-  warmup = 1000, iter=2000, chains = 1, cores = 1)
-
-#error, think it is something to do with indexing values for participant random effect, may have to renumber due to nas?
-#try removing that random effect. 
-
-
-pdCorrMulti1 <- map2stan(
-  alist(
-    Pprop ~ dnorm(mu, sigma),
-    mu <- a + dprop*Dprop + 
-      a_g[GroupID]*sigma_g,
-    a ~ dnorm(0,10),
-    dprop ~ dnorm(0,4),
-    a_g[GroupID] ~ dnorm(0,1),
-    sigma ~ dunif(0,10),
-    sigma_g ~ dcauchy(0,1)
-  ),
-  data=pdRatings, constraints=list(sigma_p="lower=0"),
-  warmup = 1000, iter=2000, chains = 1, cores = 1)
-
-precis(pdCorrMulti1)
-#same problem with group. Will try and renumber group numbers using James' Secret Code and then try again:
-
-###################*!!!!NEED TO THINK ABOUT HOW THIS AFFECTS OTHER DATASET BEFORE DOING THIS***********
-##################
+################### REMEMBER HOW THIS AFFECTS THE OTHER DATASET. 
+################## IF WE DO FOR GROUP AND ID, WILL THEY STAY THE SAME RELATIVE TO EACH OTHER?
 #################
+
+##### First for the PD Ratings: 
 
 #James' Secret Code:
 NGroups = length(unique(pdRatings$Group))
@@ -215,14 +165,7 @@ for (index in 1:NGroups){
 }
 pdRatings$GroupID <- GroupID
 
-#######*******************IMPORTANT*****************************************
-#######*********************************************************************
-#That worked! IMPORTANT: will have to be careful doing this as all id and group numbers have to be relative
-#to the originals for the other analyses too. Need to think about this carefully. 
-#Also not entirely sure if we do the same process for ppt ID numbers, will this still be relative to the correct group IDs?
-#Will try anyway for now and check with someone else later. 
-#FOR NOW: If we do the same process for the other dataset, once we have FIRST attributed the average pd ratings to the correct ID, then it
-#should all be relative within that dataset? 
+### FOR PD ratings Rater ID's: 
 
 Nraters = length(unique(pdRatings$rater_id))
 OldRaterID <- pdRatings$rater_id
@@ -232,52 +175,7 @@ for (index in 1:Nraters){
 }
 pdRatings$RaterID <- RaterID
 
-
-
-pdCorrMulti <- map2stan(
-  alist(
-    Pprop ~ dnorm(mu, sigma),
-    mu <- a + dprop*Dprop + 
-      a_p[RaterID]*sigma_p + a_g[GroupID]*sigma_g,
-    a ~ dnorm(0,10),
-    dprop ~ dnorm(0,4),
-    a_p[RaterID] ~ dnorm(0,1),
-    a_g[GroupID] ~ dnorm(0,1),
-    sigma ~ dunif(0,10),
-    sigma_p ~ dcauchy(0,1),
-    sigma_g ~ dcauchy(0,1)
-  ),
-  data=pdRatings, constraints=list(sigma_p="lower=0"),
-  warmup = 1000, iter=2000, chains = 1, cores = 1)
-
-precis(pdCorrMulti)
-
-plot(pdRatings$Dprop ~ pdRatings$Pprop)
-cor.test(pdRatings$Dprop, pdRatings$Pprop)
-cor(pdRatings$Dprop, pdRatings$Pprop)
-
-
-
-
-
-
-#single level first:
-
-votedMod_s <- map2stan(
-  alist(Nominated ~ dbinom(1,p),
-        logit(p) <- a + score*sScore + oconf*oConf + 
-          prestige*aveP + Dominance*aveD,
-        a ~ dnorm(0,10),
-        c(score, oconf, prestige, Dominance) ~ dnorm(0,1)
-  ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
-
-
-precis(votedMod_s)
-
-#trying multilevel
-#gets annoyed with group indexing again: 
-#will change BUT NEED TO THINK ABOUT THIS:
+############# FOR KERNOW RESULTS GROUPS
 
 NGroups = length(unique(kernowResults$Group))
 OldGroupID <- kernowResults$Group
@@ -288,101 +186,116 @@ for (index in 1:NGroups){
 kernowResults$GroupID <- GroupID
 
 
-votedMod_m <- map2stan(
-  alist(Nominated ~ dbinom(1,p),
-        logit(p) <- a + score*sScore + oconf*oConf + 
-          prestige*aveP + Dominance*aveD + infl*initial_influential +
-          age*ageS + sex*Sex + 
-          a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
-        a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
-        c(score, oconf, prestige, Dominance, infl, age, sex) ~ dnorm(0,1)
-  ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+kernowResults <- na.omit(kernowResults)
+colnames(kernowResults)
+colnames(kernowResults)[17] <- "initial_learn"
 
-precis(votedMod_m)
-cor(kernowResults$IndividScore, kernowResults$Overconfidence)
-cor.test(kernowResults$IndividScore, kernowResults$Overconfidence)
+######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
 
-####Dominance? Full so far...
-DomMod <- map2stan(
+library(rethinking)
+
+############################################################
+############################################################
+######## PRESTIGE AND DOMINANCE, DO THEY CORRELATE?
+############################################################
+############################################################
+
+
+presMod <- map2stan(
   alist(
-    aveD ~ dnorm(mu, sigma),
-    mu <- a + oconf*oConf + age*ageS + sex*Sex + score*sScore + infl*initial_influential +
-      a_g[GroupID]*sigma_g,
+    Pprop ~ dnorm(mu, sigma),
+    mu <- a +  
+      a_p[RaterID]*sigma_p + a_g[GroupID]*sigma_g,
     a ~ dnorm(0,10),
-    c(oconf, age, sex, score, infl) ~ dnorm(0,1),
+    a_p[RaterID] ~ dnorm(0,1),
     a_g[GroupID] ~ dnorm(0,1),
     sigma ~ dunif(0,10),
+    sigma_p ~ dcauchy(0,1),
     sigma_g ~ dcauchy(0,1)
   ),
-  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  data=pdRatings, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
-precis(DomMod)
+precis(presMod)
 
-####compare to predictions
-DomModPriori <- map2stan(
+#### Dominance null model:
+
+domMod <- map2stan(
   alist(
-    aveD ~ dnorm(mu, sigma),
-    mu <- a + oconf*oConf + infl*initial_influential +
-      a_g[GroupID]*sigma_g,
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a +  
+      a_p[RaterID]*sigma_p + a_g[GroupID]*sigma_g,
     a ~ dnorm(0,10),
-    c(oconf, infl) ~ dnorm(0,1),
+    a_p[RaterID] ~ dnorm(0,1),
     a_g[GroupID] ~ dnorm(0,1),
     sigma ~ dunif(0,10),
+    sigma_p ~ dcauchy(0,1),
     sigma_g ~ dcauchy(0,1)
   ),
-  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  data=pdRatings, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
-precis(DomModPriori)
+precis(domMod)
 
-####compare to Null
-DomModNull <- map2stan(
+#### Prestige predicted by Dominance?
+
+domPrest <- map2stan(
   alist(
-    aveD ~ dnorm(mu, sigma),
-    mu <- a + 
-      a_g[GroupID]*sigma_g,
-    a ~ dnorm(0,10),
-    a_g[GroupID] ~ dnorm(0,1),
-    sigma ~ dunif(0,10),
-    sigma_g ~ dcauchy(0,1)
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a + b_pres*Pprop + 
+      a_p[RaterID]*sigma_p + a_g[GroupID]*sigma_g,
+      a ~ dnorm(0,10),
+      b_pres ~ dnorm(0,4),
+      a_p[RaterID] ~ dnorm(0,1),
+      a_g[GroupID] ~ dnorm(0,1),
+      sigma ~ dunif(0,10),
+      sigma_p ~ dcauchy(0,1),
+      sigma_g ~ dcauchy(0,1)
   ),
-  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  data=pdRatings, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
-precis(DomModNull)
+precis(domPrest)
 
-compare(DomMod,DomModPriori, DomModNull)
 
-####Prestige? Full so far...
-PresMod <- map2stan(
+plot(pdRatings$Dprop ~ pdRatings$Pprop)
+cor.test(pdRatings$Dprop, pdRatings$Pprop)
+cor(pdRatings$Dprop, pdRatings$Pprop)
+
+############################################################
+############################################################
+##################### What predicts prestige? ###############
+############################################################
+############################################################
+
+#Full 
+
+PresFull<- map2stan(
   alist(
     aveP ~ dnorm(mu, sigma),
-    mu <- a + oconf*oConf + age*ageS + sex*Sex + score*sScore + infl*initial_influential +
+    mu <- a + score*IndividScore + o_conf*Overconfidence + infR*aveInf + lik*aveLik +
+      sex*Sex + age*ageS +
       a_g[GroupID]*sigma_g,
-    a ~ dnorm(0,10),
-    c(oconf, age, sex, score, infl) ~ dnorm(0,1),
-    a_g[GroupID] ~ dnorm(0,1),
-    sigma ~ dunif(0,10),
-    sigma_g ~ dcauchy(0,1)
+      a ~ dnorm(0,10),
+      c(score, o_conf, infR, lik, sex, age) ~ dnorm(0,1),
+      a_g[GroupID] ~ dnorm(0,1),
+      sigma ~ dunif(0,10),
+      sigma_g ~ dcauchy(0,1)
   ),
   data=kernowResults, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
-precis(PresMod)
+precis(PresFull)
 
 #A Priori
 
-PresModPriori <- map2stan(
+PresAPriori <- map2stan(
   alist(
     aveP ~ dnorm(mu, sigma),
-    mu <- a + score*IndividScore +
+    mu <- a + score*IndividScore + infR*aveInf + lik*aveLik +
       a_g[GroupID]*sigma_g,
     a ~ dnorm(0,10),
-    score ~ dnorm(0,1),
+    c(score, infR, lik) ~ dnorm(0,1),
     a_g[GroupID] ~ dnorm(0,1),
     sigma ~ dunif(0,10),
     sigma_g ~ dcauchy(0,1)
@@ -390,12 +303,12 @@ PresModPriori <- map2stan(
   data=kernowResults, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
-precis(PresModPriori)
+precis(PresAPriori)
 
 
 #Null 
 
-PresModNull <- map2stan(
+PresNull <- map2stan(
   alist(
     aveP ~ dnorm(mu, sigma),
     mu <- a +
@@ -408,6 +321,216 @@ PresModNull <- map2stan(
   data=kernowResults, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
-precis(PresModNull)
+precis(PresNull)
 
-compare(PresModNull,PresMod,PresModPriori)
+compare(PresNull,PresFull,PresAPriori)
+
+##### EXPLORATORY:   DO INITIAL RATINGS PREDICT PRES?
+
+
+############################################################
+############################################################
+##################### What predicts Dominance? ###############
+############################################################
+############################################################
+
+
+DomFull <- map2stan(
+  alist(
+    aveD ~ dnorm(mu, sigma),
+    mu <- a + score*sScore + oconf*oConf +  infR*aveInf + lik*aveLik + 
+      age*ageS + sex*Sex + 
+      a_g[GroupID]*sigma_g,
+    a ~ dnorm(0,10),
+    c(score, oconf, infR, lik, age, sex) ~ dnorm(0,1),
+    a_g[GroupID] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_g ~ dcauchy(0,1)
+  ),
+  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(DomFull)
+
+####compare to predictions
+DomAPriori <- map2stan(
+  alist(
+    aveD ~ dnorm(mu, sigma),
+    mu <- a + oconf*oConf + infR*aveInf +
+      a_g[GroupID]*sigma_g,
+      a ~ dnorm(0,10),
+      c(oconf, infR) ~ dnorm(0,1),
+      a_g[GroupID] ~ dnorm(0,1),
+      sigma ~ dunif(0,10),
+      sigma_g ~ dcauchy(0,1)
+  ),
+  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(DomAPriori)
+
+####compare to Null
+DomNull <- map2stan(
+  alist(
+    aveD ~ dnorm(mu, sigma),
+    mu <- a + 
+      a_g[GroupID]*sigma_g,
+    a ~ dnorm(0,10),
+    a_g[GroupID] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_g ~ dcauchy(0,1)
+  ),
+  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(DomNull)
+
+compare(DomFull,DomAPriori, DomNull)
+
+
+
+
+
+##################################################
+##########################################################################
+################ NOMINATIONS MODELS ################################################
+##########################################################################
+##################################################
+
+
+##### Full Model: 
+
+nominatedFull <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + score*sScore + oconf*oConf + 
+          prestige*aveP + Dominance*aveD + infR*aveInf + lik*aveLik + 
+          infl*initial_influential + inLearn*initial_learn + 
+          age*ageS + sex*Sex + 
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        c(score, oconf, prestige, Dominance, infR, lik, infl, inLearn, age, sex) ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nominatedFull)
+
+
+####### Null Model: 
+
+
+nominatedNull <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + 
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nominatedNull)
+
+
+######## Prestige predicts nominations:
+
+
+nomPres <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + 
+          prestive*aveP +
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        prestige ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nomPres)
+
+######### Dominance predicts nominations:
+
+
+nomDom <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + 
+          Dominance*aveD +
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        Dominance ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nomDom)
+
+########### Likeability predicts nominations: 
+
+
+nomLik <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + lik*aveLik + 
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        lik ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nomLik)
+
+######## Influence on the task: 
+
+
+nomInf <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + infR*aveInf + 
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        infR ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nomInf)
+
+
+########## Previously influential:
+
+
+nomPrevious <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + infl*initial_influential + inLearn*initial_learn + 
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        c(infl, inLearn) ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nomPrevious)
+
+compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious)
+
+############# EXPLORATORY: Score & Overconf? 
+
+
+nomSCORE <- map2stan(
+  alist(Nominated ~ dbinom(1,p),
+        logit(p) <- a + score*sScore + oconf*oConf + 
+          a_g[GroupID]*sigma_g,
+        a ~ dnorm(0,10),
+        a_g[GroupID] ~ dnorm(0,1),
+        sigma_g ~ dcauchy(0,1),
+        c(score, oconf) ~ dnorm(0,1)
+  ),
+  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+
+precis(nomSCORE)
+compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious, nomSCORE)
