@@ -194,9 +194,63 @@ colnames(kernowResults)[17] <- "initial_learn"
 
 library(rethinking)
 
+
 ############################################################
 ############################################################
-######## PRESTIGE AND DOMINANCE, DO THEY CORRELATE?
+######## COMMUNITY PRESTIGE AND DOMINANCE RATINGS: 
+############################################################
+############################################################
+
+commRatings <- read.csv("commRatings.csv")
+commRatings$X.1 <- NULL
+
+presComm <- map2stan(
+  alist(
+    Pprop ~ dnorm(mu, sigma),
+    mu <- a,
+    a ~ dnorm(0,10),
+    sigma ~ dunif(0,10)
+  ),
+  data=commRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(presComm)
+
+
+domComm <- map2stan(
+  alist(
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a,
+    a ~ dnorm(0,10),
+    sigma ~ dunif(0,10)
+  ),
+  data=commRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(domComm)
+
+#### Prestige predicted by Dominance?
+
+domPrestComm <- map2stan(
+  alist(
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a + b_pres*Pprop,
+    a ~ dnorm(0,10),
+    b_pres ~ dnorm(0,4),
+    sigma ~ dunif(0,10)
+  ),
+  data=commRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(domPrestComm)
+
+plot(commRatings$Dprop ~ commRatings$Pprop)
+cor.test(commRatings$Dprop, commRatings$Pprop)
+cor(commRatings$Dprop, commRatings$Pprop)
+
+############################################################
+############################################################
+######## GROUP PRESTIGE AND DOMINANCE, DO THEY CORRELATE?
 ############################################################
 ############################################################
 
@@ -264,7 +318,7 @@ cor(pdRatings$Dprop, pdRatings$Pprop)
 
 ############################################################
 ############################################################
-##################### What predicts prestige? ###############
+##################### What predicts group prestige ratings? ###############
 ############################################################
 ############################################################
 
@@ -328,9 +382,28 @@ compare(PresNull,PresFull,PresAPriori)
 ##### EXPLORATORY:   DO INITIAL RATINGS PREDICT PRES?
 
 
+PresInitial <- map2stan(
+  alist(
+    aveP ~ dnorm(mu, sigma), 
+    mu <- a + infl*initial_influential + infLearn*initial_learn +
+      a_g[GroupID]*sigma_g,
+    a ~ dnorm(0,10),
+    c(infl, infLearn) ~ dnorm(0,1),
+    a_g[GroupID] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_g ~ dcauchy(0,1)
+  ),
+  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(PresInitial)
+
+compare(PresFull, PresNull, PresAPriori, PresInitial)
+
+
 ############################################################
 ############################################################
-##################### What predicts Dominance? ###############
+##################### What predicts group Dominance ratings? ###############
 ############################################################
 ############################################################
 
@@ -387,8 +460,26 @@ precis(DomNull)
 
 compare(DomFull,DomAPriori, DomNull)
 
+############# Exploratory: Do initial ratings predict Dominance?
 
 
+DomInit <- map2stan(
+  alist(
+    aveD ~ dnorm(mu, sigma),
+    mu <- a + infl*initial_influential + infLearn*initial_learn +  
+      a_g[GroupID]*sigma_g,
+    a ~ dnorm(0,10),
+    c(infl, infLearn) ~ dnorm(0,1),
+    a_g[GroupID] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_g ~ dcauchy(0,1)
+  ),
+  data=kernowResults, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(DomInit)
+
+compare(DomFull, DomNull, DomAPriori, DomInit)
 
 
 ##################################################
