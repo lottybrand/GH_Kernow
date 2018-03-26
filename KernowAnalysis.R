@@ -3,7 +3,7 @@ library(dplyr)
 library(psy)
 setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 
-#pdRatings <- read.csv("kernowResults220318.csv")
+#kresults <- read.csv("kernowResults220318.csv")
 
 pdRatings <- read.csv("pdRatings.csv")
 
@@ -77,6 +77,76 @@ DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R1
 cronbach(PrestigeRatings)
 cronbach(DominanceRatings)
 
+###Now for combining with Kernow Results (IDS etc)
+
+kernowResults <- read.delim("kernow_results_26_03_18_IDS.txt")
+
+kernowResults[kernowResults == "na"] <- NA
+kernowResults <- na.omit(kernowResults)
+
+### First need to make an average column for the pd ratings for each rated ppt. 
+### Then use the match function to assign these to the other dataframe
+
+aveP <- aggregate(pdRatings$Pprop, list(pdRatings$rated_ID), mean)
+aveD <- aggregate(pdRatings$Dprop, list(pdRatings$rated_ID), mean)
+
+#using Match!
+pdRatings$aveP <- aveP$x[match(pdRatings$rated_ID, aveP$Group.1)]
+pdRatings$aveD <- aveD$x[match(pdRatings$rated_ID, aveD$Group.1)]
+
+
+kernowResults$aveP <- aveP$x[match(kernowResults$ID, aveP$Group.1)]
+kernowResults$aveD <- aveD$x[match(kernowResults$ID, aveD$Group.1)]
+
+#and as ordinal...
+
+meanP <- aggregate(pdRatings$prestigeMean, list(pdRatings$rated_ID), mean)
+meanD <- aggregate(pdRatings$dominanceMean, list(pdRatings$rated_ID), mean)
+
+#using Match!
+kernowResults$meanP <- meanP$x[match(kernowResults$ID, meanP$Group.1)]
+kernowResults$meanD <- meanD$x[match(kernowResults$ID, meanD$Group.1)]
+
+#and for influence ratings:
+
+pdRatings$Infsum <- rowSums(pdRatings[,c("R18", "R19", "R20")], na.rm = TRUE)
+pdRatings$Infprop <- (pdRatings$Infsum -3)/18
+
+aveInf <- aggregate(pdRatings$Infprop, list(pdRatings$rated_ID), mean)
+kernowResults$aveInf <- aveInf$x[match(kernowResults$ID, aveInf$Group.1)]
+
+
+pdRatings$Likesum <- rowSums(pdRatings[,c("R21", "R22")], na.rm = TRUE)
+pdRatings$Likeprop <-(pdRatings$Likesum -2)/12
+
+aveLik <- aggregate(pdRatings$Likeprop, list(pdRatings$rated_ID), mean)
+kernowResults$aveLik <- aveLik$x[match(kernowResults$ID, aveLik$Group.1)]
+
+#pdRatings <- na.omit(pdRatings)
+ 
+
+#hmmm what to do about scaling overconfidence... 
+kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
+#kernowResults$oConf <- (kernowResults$Overconfidence + 40)/80 
+kernowResults$oConf <- scale(kernowResults$Overconfidence)
+kernowResults$sScore <- scale(kernowResults$IndividScore)
+
+
+kernowResults$Age <- as.numeric(levels(kernowResults$Age))[as.integer(kernowResults$Age)]
+kernowResults$ageS <- scale(kernowResults$Age)
+kernowResults$Sex <- as.numeric(levels(kernowResults$Sex))[as.integer(kernowResults$Sex)]
+
+############
+########### NOW YOU CAN RE-ORDER INDECES
+##########
+
+
+
+
+
+
+######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
+
 library(rethinking)
 
 #try single level first
@@ -100,14 +170,14 @@ pdCorrMulti <- map2stan(
     Pprop ~ dnorm(mu, sigma),
     mu <- a + dprop*Dprop + 
       a_p[rater_id]*sigma_p + a_g[Group]*sigma_g,
-      a ~ dnorm(0,10),
-      dprop ~ dnorm(0,4),
-      a_p[rater_id] ~ dnorm(0,1),
-      a_g[Group] ~ dnorm(0,1),
-      sigma ~ dunif(0,10),
-      sigma_p ~ dcauchy(0,1),
-      sigma_g ~ dcauchy(0,1)
-    ),
+    a ~ dnorm(0,10),
+    dprop ~ dnorm(0,4),
+    a_p[rater_id] ~ dnorm(0,1),
+    a_g[Group] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_p ~ dcauchy(0,1),
+    sigma_g ~ dcauchy(0,1)
+  ),
   data=pdRatings, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
@@ -120,17 +190,21 @@ pdCorrMulti1 <- map2stan(
     Pprop ~ dnorm(mu, sigma),
     mu <- a + dprop*Dprop + 
       a_g[GroupID]*sigma_g,
-      a ~ dnorm(0,10),
-      dprop ~ dnorm(0,4),
-      a_g[GroupID] ~ dnorm(0,1),
-      sigma ~ dunif(0,10),
-      sigma_g ~ dcauchy(0,1)
+    a ~ dnorm(0,10),
+    dprop ~ dnorm(0,4),
+    a_g[GroupID] ~ dnorm(0,1),
+    sigma ~ dunif(0,10),
+    sigma_g ~ dcauchy(0,1)
   ),
   data=pdRatings, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
 precis(pdCorrMulti1)
 #same problem with group. Will try and renumber group numbers using James' Secret Code and then try again:
+
+###################*!!!!NEED TO THINK ABOUT HOW THIS AFFECTS OTHER DATASET BEFORE DOING THIS***********
+##################
+#################
 
 #James' Secret Code:
 NGroups = length(unique(pdRatings$Group))
@@ -182,29 +256,10 @@ plot(pdRatings$Dprop ~ pdRatings$Pprop)
 cor.test(pdRatings$Dprop, pdRatings$Pprop)
 cor(pdRatings$Dprop, pdRatings$Pprop)
 
-### First need to make an average column for the pd ratings for each rated ppt. 
-### Then use the match function to assign these to the other dataframe
 
-aveP <- aggregate(pdRatings$Pprop, list(pdRatings$rated_ID), mean)
-aveD <- aggregate(pdRatings$Dprop, list(pdRatings$rated_ID), mean)
 
-#using Match!
-pdRatings$aveP <- aveP$x[match(pdRatings$rated_ID, aveP$Group.1)]
-pdRatings$aveD <- aveD$x[match(pdRatings$rated_ID, aveD$Group.1)]
 
-kernowResults <- read.delim("kernow_results_16_03_18_IDS.txt")
 
-kernowResults[kernowResults == "na"] <- NA
-kernowResults <- na.omit(kernowResults)
-
-kernowResults$aveP <- aveP$x[match(kernowResults$ID, aveP$Group.1)]
-kernowResults$aveD <- aveD$x[match(kernowResults$ID, aveD$Group.1)]
-
-#hmmm what to do about scaling overconfidence... 
-kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
-#kernowResults$oConf <- (kernowResults$Overconfidence + 40)/80 
-kernowResults$oConf <- scale(kernowResults$Overconfidence)
-kernowResults$sScore <- scale(kernowResults$IndividScore)
 
 #single level first:
 
@@ -231,10 +286,6 @@ for (index in 1:NGroups){
   GroupID[OldGroupID == unique(OldGroupID)[index]] = index
 }
 kernowResults$GroupID <- GroupID
-
-kernowResults$Age <- as.numeric(levels(kernowResults$Age))[as.integer(kernowResults$Age)]
-kernowResults$ageS <- scale(kernowResults$Age)
-kernowResults$Sex <- as.numeric(levels(kernowResults$Sex))[as.integer(kernowResults$Sex)]
 
 
 votedMod_m <- map2stan(
