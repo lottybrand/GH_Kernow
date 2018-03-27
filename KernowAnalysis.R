@@ -197,7 +197,7 @@ library(rethinking)
 
 ############################################################
 ############################################################
-######## COMMUNITY PRESTIGE AND DOMINANCE RATINGS: 
+######## COMMUNITY INFLUENCE PRESTIGE AND DOMINANCE RATINGS: 
 ############################################################
 ############################################################
 
@@ -247,6 +247,62 @@ precis(domPrestComm)
 plot(commRatings$Dprop ~ commRatings$Pprop)
 cor.test(commRatings$Dprop, commRatings$Pprop)
 cor(commRatings$Dprop, commRatings$Pprop)
+
+
+
+############################################################
+############################################################
+######## COMMUNITY LEARN FROM PRESTIGE AND DOMINANCE RATINGS: 
+############################################################
+############################################################
+
+learnRatings <- read.csv("learnRatings.csv")
+
+presLearn <- map2stan(
+  alist(
+    Pprop ~ dnorm(mu, sigma),
+    mu <- a,
+    a ~ dnorm(0,10),
+    sigma ~ dunif(0,10)
+  ),
+  data=learnRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(presLearn)
+
+
+domLearn <- map2stan(
+  alist(
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a,
+    a ~ dnorm(0,10),
+    sigma ~ dunif(0,10)
+  ),
+  data=learnRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(domLearn)
+
+#### Prestige predicted by Dominance?
+
+domPrestLearn <- map2stan(
+  alist(
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a + b_pres*Pprop,
+    a ~ dnorm(0,10),
+    b_pres ~ dnorm(0,4),
+    sigma ~ dunif(0,10)
+  ),
+  data=learnRatings, constraints=list(sigma_p="lower=0"),
+  warmup = 1000, iter=2000, chains = 1, cores = 1)
+
+precis(domPrestLearn)
+
+plot(learnRatings$Dprop ~ learnRatings$Pprop)
+cor.test(learnRatings$Dprop, learnRatings$Pprop)
+cor(learnRatings$Dprop, learnRatings$Pprop)
+
+
 
 ############################################################
 ############################################################
