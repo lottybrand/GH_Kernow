@@ -88,3 +88,5 @@ hist(TheQueen$dominanceMean)
 TMay <- commRatings[commRatings$X999me == "Theresa May",]
 hist(TMay$prestigeMean)
 hist(TMay$dominanceMean)
+
+#doing more things 
