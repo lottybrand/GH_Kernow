@@ -76,3 +76,15 @@ cronbach(DominanceRatings)
 
 hist(commRatings$prestigeMean)
 hist(commRatings$dominanceMean)
+
+SirDave <- commRatings[commRatings$X999me == "David Attenborough",]
+hist(SirDave$prestigeMean)
+hist(SirDave$dominanceMean)
+
+TheQueen <- commRatings[commRatings$X999me == "The Queen",]
+hist(TheQueen$prestigeMean)
+hist(TheQueen$dominanceMean)
+
+TMay <- commRatings[commRatings$X999me == "Theresa May",]
+hist(TMay$prestigeMean)
+hist(TMay$dominanceMean)

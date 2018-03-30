@@ -147,8 +147,8 @@ hist(kernowResults$IndividScore)
 ########### NOW YOU CAN RE-ORDER INDECES
 ##########
 
-#kernowResults <- read.csv("kernowResults.csv")
-#pdRatings <- read.csv("pdRatings.csv")
+kernowResults <- read.csv("kernowResults.csv")
+pdRatings <- read.csv("pdRatings.csv")
 
 ################### REMEMBER HOW THIS AFFECTS THE OTHER DATASET. 
 ################## IF WE DO FOR GROUP AND ID, WILL THEY STAY THE SAME RELATIVE TO EACH OTHER?
@@ -189,6 +189,7 @@ kernowResults$GroupID <- GroupID
 kernowResults <- na.omit(kernowResults)
 colnames(kernowResults)
 colnames(kernowResults)[17] <- "initial_learn"
+
 
 ######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
 
@@ -681,3 +682,12 @@ nomSCORE <- map2stan(
 
 precis(nomSCORE)
 compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious, nomSCORE)
+
+##############################################################
+##############################################################
+######################### PLOTS ##############################
+##############################################################
+##############################################################
+##############################################################
+
+hist(commRatings$)
