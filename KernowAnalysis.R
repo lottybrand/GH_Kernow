@@ -66,7 +66,7 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 # write.csv(pdRatings, "pdRatings.csv")
 
 
-#cronbach test stuff
+#subsets and cronbach test stuff
 PrestigeRatings <- subset(pdRatings, select = c(R1, R2rev, R4, R6rev, R8, R13, R14, R15, R17rev))
 DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R12rev, R16))
 
@@ -119,7 +119,7 @@ aveLik <- aggregate(pdRatings$Likeprop, list(pdRatings$rated_ID), mean)
 kernowResults$aveLik <- aveLik$x[match(kernowResults$ID, aveLik$Group.1)]
  
 
-#need to decide best way tos cale overconfidence.. and score?
+#need to decide best way to scale overconfidence.. and score?
 
 kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
 kernowResults$Overconfidence <- (kernowResults$Overconfidence + 40)/80
@@ -154,6 +154,7 @@ pdRatings <- read.csv("pdRatings.csv")
 ################## IF WE DO FOR GROUP AND ID, WILL THEY STAY THE SAME RELATIVE TO EACH OTHER?
 #################
 
+####### should be able to use coerce index instead ####
 ##### First for the PD Ratings: 
 
 #James' Secret Code:
