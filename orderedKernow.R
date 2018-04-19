@@ -42,5 +42,108 @@ pdSubLong[,4:16] <- NULL
 
 colnames(pdSubLong2)
 pdSubLong2[,4:17] <- NULL
+colnames(pdSubLong2)[4] <- "domItem"
 
 #cool, should be able to do some ordinal with these 
+
+gPresD <- pdSubLong 
+gDomD <- pdSubLong2
+
+#okay let's try and add the other info in from the other datasets for predictors.
+#for Full prestige model, we need, score, overconfidence, influence, likeability, sex, age. 
+#and nominated tooo...??? 
+#using match from the full kernowResults file: 
+
+gPresD$Age <- kernowResults$Age[match(gPresD$rated_ID, kernowResults$ID)]
+#check using order:
+gPresD <- gPresD[order(gPresD$rated_ID),]
+#GREAT! OKay, this is lovely. 
+gPresD$Sex <- kernowResults$Sex[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$Score <- kernowResults$IndividScore[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$OverConf <- kernowResults$Overconfidence[match(gPresD$rated_ID,kernowResults$ID)]
+gPresD$nominated <- kernowResults$Nominated[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$initInf <- kernowResults$initial_influential[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$initLrn <- kernowResults$intial_learn[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$Liked <- kernowResults$aveLik[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$Inflntl <- kernowResults$aveInf[match(gPresD$rated_ID, kernowResults$ID)]
+
+
+#make random effect factors? 
+gPresD$rater_id <- as.factor(gPresD$rater_id)
+gPresD$rated_ID <- as.factor(gPresD$rated_ID)
+gPresD$Group <- as.factor(gPresD$Group)
+gPresD$raterId <- coerce_index(gPresD$rater_id)
+gPresD$ratedID <- coerce_index(gPresD$rated_ID)
+gPresD$grpID <- coerce_index(gPresD$Group)
+gPresD$itemID <- coerce_index(gPresD$presItem)
+
+#following along with pp334 rethinking: 
+
+presPlot <- simplehist(gPresD$prestigeRatings, xlim = c(1,7), xlab = "response")
+domPlot <- simplehist(gDomD$dominanceRatings, xlim = c(1,7), xlab = "response")
+domPlot
+
+
+#basic single level: 
+pM.1 <- map2stan(
+  alist(
+    prestigeRatings ~ dordlogit(phi, cutpoints),
+    phi <- 0, 
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gPresD, 
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 2, cores = 2)
+
+precis(pM.1, depth=2)
+plot(pM.1)
+
+#add predictors: 
+pM2 <- map2stan(
+  alist(
+    prestigeRatings ~ dordlogit(phi, cutpoints),
+    phi <- bS*Score + bI*Inflntl + bL*Liked + bN*nominated,
+    c(bS, bI, bL, bN) ~ dnorm(0,10),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gPresD, 
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 2, cores = 2)
+
+precis(pM2, depth=2)
+plot(pM2)
+
+#try adding full multi level: 
+pM3 <- map2stan(
+  alist(
+    prestigeRatings ~ dordlogit(phi, cutpoints),
+    phi <- bS*Score + bI*Inflntl + bL*Liked + bN*nominated +
+      a_g[Group]*sigmaG + aR[rater_id]*sigmaR + aID[rated_ID]*sigmaID,
+    c(bS, bI, bL, bN) ~ dnorm(0,10),
+    c(a_g[Group], aR[rater_id], aID[rated_ID]) ~ dnorm(0,1),
+    c(sigmaG, sigmaR, sigmaID) ~ dcauchy(0,1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gPresD, 
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 2, cores = 2)
+
+#try adding just one random effect: 
+pM4 <- map2stan(
+  alist(
+    prestigeRatings ~ dordlogit(phi, cutpoints),
+    phi <- bS*Score + bI*Inflntl + bL*Liked + bN*nominated +
+      aID[ratedID]*sigmaID + aR[raterId]*sigmaR +aG[grpID]*sigmaG,
+    c(bS, bI, bL, bN) ~ dnorm(0,10),
+    aG[grpID] ~ dnorm(0,1),
+    aID[ratedID]  ~ dnorm(0,1),
+    aR[raterId] ~ dnorm(0,1),
+    c(sigmaID, sigmaR, sigmaG) ~ dcauchy(0,1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gPresD, 
+  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 1, cores = 1)
+
+precis(pM4)

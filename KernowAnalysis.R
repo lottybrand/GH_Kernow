@@ -437,7 +437,7 @@ precis(PresNull)
 
 compare(PresNull,PresFull,PresAPriori)
 
-##### EXPLORATORY:   DO INITIAL RATINGS PREDICT PRES?
+##### (This is 'Nominated' from the OSF 'full model'? 'inital influential?' #####
 
 
 PresInitial <- map2stan(
