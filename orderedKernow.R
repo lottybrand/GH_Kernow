@@ -149,15 +149,17 @@ pM_Apriori <- map2stan(
 
 precis(pM_Apriori)
 
+gPresD_NA <- na.omit(gPresD)
+
 #try full multi level: 
 pMFull <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
     phi <- bS*ScoreC + bI*Inflntl + bL*Liked + bN*nominated + 
-      bIn*initInf + bInl*initLrn +
+      bIn*initInf + bInl*initLrn + bSx*Sex + bA*Age +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
-    c(bS, bI, bL, bN, bIn, bInl) ~ dnorm(0,10),
+    c(bS, bI, bL, bN, bIn, bInl, bSx, bA) ~ dnorm(0,10),
     aG[grpID] ~ dnorm(0,1),
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
@@ -165,7 +167,7 @@ pMFull <- map2stan(
     c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
     cutpoints ~ dnorm(0,10)
   ),
-  data=gPresD, 
+  data=gPresD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
   chains = 1, cores = 1)
