@@ -122,15 +122,14 @@ kernowResults$aveLik <- aveLik$x[match(kernowResults$ID, aveLik$Group.1)]
 #need to decide best way to scale overconfidence.. and score?
 
 kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
-kernowResults$Overconfidence <- (kernowResults$Overconfidence + 40)/80
-kernowResults$oConf <- scale(kernowResults$Overconfidence)
-kernowResults$sScore <- scale(kernowResults$IndividScore)
+kernowResults$Overconfidence <- kernowResults$Overconfidence + 40
+kernowResults$o_conf <- kernowResults$Overconfidence - mean(kernowResults$Overconfidence)
+kernowResults$sScore <- kernowResults$IndividScore - mean(kernowResults$IndividScore)
 
 #Do we need to scale Age as well? 
 
 kernowResults$Age <- as.numeric(levels(kernowResults$Age))[as.integer(kernowResults$Age)]
-kernowResults$ageS <- scale(kernowResults$Age)
-kernowResults$Sex <- as.numeric(levels(kernowResults$Sex))[as.integer(kernowResults$Sex)]
+kernowResults$ageS <- kernowResults$Age - mean(kernowResults$Age)
 
 ##Now write this to file
 write.csv(kernowResults, "kernowResults.csv")
@@ -178,19 +177,11 @@ pdRatings$RaterID <- RaterID
 
 ############# FOR KERNOW RESULTS GROUPS
 
-NGroups = length(unique(kernowResults$Group))
-OldGroupID <- kernowResults$Group
-GroupID <- array(0,length(kernowResults$Group))
-for (index in 1:NGroups){
-  GroupID[OldGroupID == unique(OldGroupID)[index]] = index
-}
-kernowResults$GroupID <- GroupID
 
+kernowResults$GroupID <- coerce_index(kernowResults$Group)
+colnames(kernowResults)[18] <- "initial_learn"
 
-kernowResults <- na.omit(kernowResults)
-colnames(kernowResults)
-colnames(kernowResults)[17] <- "initial_learn"
-
+write.csv(kernowResults, "kernowResults.csv")
 
 ######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
 
@@ -204,7 +195,8 @@ library(rethinking)
 ############################################################
 
 commRatings <- read.csv("commRatings.csv")
-commRatings$X.1 <- NULL
+commRatings[,1:7] <- NULL
+write.csv(commRatings, "commRatings.csv")
 
 presComm <- map2stan(
   alist(
@@ -237,8 +229,8 @@ domPrestComm <- map2stan(
   alist(
     Dprop ~ dnorm(mu, sigma),
     mu <- a + b_pres*Pprop,
-    a ~ dnorm(0,10),
-    b_pres ~ dnorm(0,4),
+    a ~ dnorm(0,1),
+    b_pres ~ dnorm(0,1),
     sigma ~ dunif(0,10)
   ),
   data=commRatings, constraints=list(sigma_p="lower=0"),
@@ -246,10 +238,32 @@ domPrestComm <- map2stan(
 
 precis(domPrestComm)
 
-plot(commRatings$Dprop ~ commRatings$Pprop)
+#Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+#a       0.82   0.06       0.73       0.91   335    1
+#b_pres -0.52   0.08      -0.66      -0.39   276    1
+#sigma   0.21   0.01       0.19       0.23   632    1
+?gsub
+colnames(commRatings)[2] <- "Name"
+commRatings$name <- gsub("999", 'na', commRatings$Name)
+commRatings$Name <- commRatings$name
+commRatings$name <- NULL
+write.csv(commRatings, "commRatings.csv")
+
+inflNames <- c("The Queen", "Queen", "Queen Elizabeth", "Theresa May", "David Attenborough",
+               "Jeremy Corbyn", "Donald Trump", "JK Rowling", "Ozzy Osbourne",
+               "Boris Johnson", "Prince Charles")
+infLabels <- commRatings[commRatings$Name %in% inflNames,]
+
+
+namePlot <- ggplot(commRatings, aes(Pprop, Dprop, label=Name)) +
+  geom_point(size = 0.5) +
+  theme_bw() +
+  geom_text(data=infLabels, position = position_jitter(), size = 5)
+namePlot
+
 cor.test(commRatings$Dprop, commRatings$Pprop)
 cor(commRatings$Dprop, commRatings$Pprop)
-
+#[1] -0.4868556
 
 
 ############################################################
@@ -546,17 +560,17 @@ compare(DomFull, DomNull, DomAPriori, DomInit)
 ##########################################################################
 ##################################################
 
-
+kernowResults <- na.omit(kernowResults)
 ##### Full Model: 
 
 nominatedFull <- map2stan(
   alist(Nominated ~ dbinom(1,p),
-        logit(p) <- a + score*sScore + oconf*oConf + 
+        logit(p) <- a + score*sScore + oconf*o_conf + 
           prestige*aveP + Dominance*aveD + infR*aveInf + lik*aveLik + 
           infl*initial_influential + inLearn*initial_learn + 
           age*ageS + sex*Sex + 
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
         sigma_g ~ dcauchy(0,1),
         c(score, oconf, prestige, Dominance, infR, lik, infl, inLearn, age, sex) ~ dnorm(0,1)
@@ -588,7 +602,7 @@ precis(nominatedNull)
 nomPres <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + 
-          prestive*aveP +
+          prestige*aveP +
           a_g[GroupID]*sigma_g,
         a ~ dnorm(0,10),
         a_g[GroupID] ~ dnorm(0,1),
@@ -672,7 +686,7 @@ compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevio
 
 nomSCORE <- map2stan(
   alist(Nominated ~ dbinom(1,p),
-        logit(p) <- a + score*sScore + oconf*oConf + 
+        logit(p) <- a + score*sScore + oconf*o_conf + 
           a_g[GroupID]*sigma_g,
         a ~ dnorm(0,10),
         a_g[GroupID] ~ dnorm(0,1),
@@ -683,6 +697,19 @@ nomSCORE <- map2stan(
 
 precis(nomSCORE)
 compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious, nomSCORE)
+
+
+#WAIC pWAIC dWAIC weight    SE   dSE
+#nominatedFull 121.1   7.6   0.0   0.82 14.42    NA
+#nomSCORE      125.0   4.5   4.0   0.11 14.93  3.28
+#nomInf        126.2   2.1   5.1   0.06 11.56 10.10
+#nomPrevious   140.7   3.7  19.6   0.00 13.47  9.82
+#nomDom        141.0   2.3  19.9   0.00 13.12 10.89
+#nomPres       142.1   2.1  21.0   0.00 13.21 10.57
+#nominatedNull 142.4   2.1  21.3   0.00 13.22 10.58
+#nomLik        143.0   2.5  22.0   0.00 13.26 10.63
+
+plot(precis(nominatedFull))
 
 ##############################################################
 ##############################################################
