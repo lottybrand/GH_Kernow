@@ -314,10 +314,15 @@ domPrestLearn <- map2stan(
 
 precis(domPrestLearn)
 
+# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+#a       0.48   0.12       0.28       0.65   296 1.00
+#b_pres -0.20   0.15      -0.41       0.05   297 1.00
+#sigma   0.20   0.01       0.18       0.22   371 1.01
+
 plot(learnRatings$Dprop ~ learnRatings$Pprop)
 cor.test(learnRatings$Dprop, learnRatings$Pprop)
 cor(learnRatings$Dprop, learnRatings$Pprop)
-
+#[1] -0.1110871
 
 
 ############################################################
@@ -709,7 +714,7 @@ compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevio
 #nominatedNull 142.4   2.1  21.3   0.00 13.22 10.58
 #nomLik        143.0   2.5  22.0   0.00 13.26 10.63
 
-plot(precis(nominatedFull))
+plot(precis(nominatedFull, pars = c("a", "score", "oconf", "prestige", "Dominance", "infR","lik","infl","inLearn","age","sex")))
 
 ##############################################################
 ##############################################################
