@@ -8,46 +8,52 @@ kernowResults <- read.csv("kernowResults.csv")
 #for reference: the prestige and dominance items are:
 #PrestigeRatings <- subset(pdRatings, select = c(R1, R2rev, R4, R6rev, R8, R13, R14, R15, R17rev))
 #DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R12rev, R16))
+# 
+# colnames(pdRatings)
+# pdSub <- pdRatings[,3:32]
+# colnames(pdSub)
+# #get rid of unused non-reversed items:
+# pdSub <- pdSub[,-c(5,9,13,15,20)]
+# colnames(pdSub)
+# 
+# prestige <- c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")
+# ?reshape
+# pdSubLong <- reshape(pdSub, times = prestige,
+#                      varying = prestige,
+#                      v.names = c("prestigeRatings"), 
+#                      direction = "long")
+# 
+# pdSubLong <- pdSubLong[order(pdSubLong$rater_id),]
+# colnames(pdSubLong)[17] <- "presItem"
+# 
+# dominance <- c("R3", "R5", "R7", "R9", "R10rev", "R11", "R12rev", "R16")
+# 
+# #hmmm this didn't work with pdSubLong instead of pdSub... 
+# pdSubLong2 <- reshape(pdSub, times = dominance,
+#                       varying = dominance,
+#                       v.names = c("dominanceRatings"),
+#                       direction = "long")
+# 
+# #now two diff datasets created, one with the prestige ratings, another with the dominance. Maybe that's fine...
+# #delete unwated bits:
+# 
+# colnames(pdSubLong)
+# pdSubLong[,4:16] <- NULL
+# 
+# colnames(pdSubLong2)
+# pdSubLong2[,4:17] <- NULL
+# colnames(pdSubLong2)[4] <- "domItem"
+# 
+# #cool, should be able to do some ordinal with these 
+# 
+# gPresD <- pdSubLong 
+# gDomD <- pdSubLong2
+# 
+# write.csv(gPresD, "gPresD.csv")
+# write.csv(gDomD, "gDomD.csv")
 
-colnames(pdRatings)
-pdSub <- pdRatings[,3:32]
-colnames(pdSub)
-#get rid of unused non-reversed items:
-pdSub <- pdSub[,-c(5,9,13,15,20)]
-colnames(pdSub)
-
-prestige <- c("R1", "R2rev", "R4", "R6rev", "R8", "R13", "R14", "R15", "R17rev")
-?reshape
-pdSubLong <- reshape(pdSub, times = prestige,
-                     varying = prestige,
-                     v.names = c("prestigeRatings"), 
-                     direction = "long")
-
-pdSubLong <- pdSubLong[order(pdSubLong$Group),]
-colnames(pdSubLong)[17] <- "presItem"
-
-dominance <- c("R3", "R5", "R7", "R9", "R10rev", "R11", "R12rev", "R16")
-
-#hmmm this didn't work with pdSubLong instead of pdSub... 
-pdSubLong2 <- reshape(pdSub, times = dominance,
-                      varying = dominance,
-                      v.names = c("dominanceRatings"),
-                      direction = "long")
-
-#now two diff datasets created, one with the prestige ratings, another with the dominance. Maybe that's fine...
-#delete unwated bits:
-
-colnames(pdSubLong)
-pdSubLong[,4:16] <- NULL
-
-colnames(pdSubLong2)
-pdSubLong2[,4:17] <- NULL
-colnames(pdSubLong2)[4] <- "domItem"
-
-#cool, should be able to do some ordinal with these 
-
-gPresD <- pdSubLong 
-gDomD <- pdSubLong2
+read.csv("gPresD.csv")
+read.csv("gDomD.csv")
 
 #histPlots
 presPlot <- simplehist(gPresD$prestigeRatings, xlim = c(1,7), xlab = "response")
@@ -55,7 +61,7 @@ domPlot <- simplehist(gDomD$dominanceRatings, xlim = c(1,7), xlab = "response")
 domPlot
 
 hist(kernowResults$Age, xlim = c(0,100), ylim = c(0,40), xlab = "Age")
-
+agePlot <- simplehist(kernowResults$Age, xlab = "Age")
 #okay let's try and add the other info in from the other datasets for predictors.
 #for Full prestige model, we need, score, overconfidence, influence, likeability, sex, age. 
 #and nominated tooo..
@@ -70,12 +76,13 @@ gPresD$Score <- kernowResults$IndividScore[match(gPresD$rated_ID, kernowResults$
 gPresD$OverConf <- kernowResults$Overconfidence[match(gPresD$rated_ID,kernowResults$ID)]
 gPresD$nominated <- kernowResults$Nominated[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$initInf <- kernowResults$initial_influential[match(gPresD$rated_ID, kernowResults$ID)]
-gPresD$initLrn <- kernowResults$intial_learn[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$initLrn <- kernowResults$initial_learn[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$Liked <- kernowResults$aveLik[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$Inflntl <- kernowResults$aveInf[match(gPresD$rated_ID, kernowResults$ID)]
 
 #centre score & overconf
-gPresD$ScoreC <- gPresD$Score - mean(gPresD$Score)
+meanScore <- mean(gPresD$Score, na.rm = TRUE)
+gPresD$ScoreC <- gPresD$Score - meanScore
 gPresD$overconf <- gPresD$OverConf+40
 meanOConf <- mean(gPresD$overconf, na.rm = TRUE)
 gPresD$OverConfC <- gPresD$overconf - meanOConf
@@ -88,7 +95,7 @@ gPresD_NA$ratedID <- coerce_index(gPresD_NA$rated_ID)
 gPresD_NA$grpID <- coerce_index(gPresD_NA$Group)
 gPresD_NA$itemID <- coerce_index(gPresD_NA$presItem)
 
-
+write.csv(gPresD_NA, "gPresD_NA.csv")
 
 #Null
 pM_null <- map2stan(
@@ -109,6 +116,11 @@ pM_null <- map2stan(
   chains = 1, cores = 1)
 
 precis(pM_null)
+#Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# sigmaID   1.02   0.08       0.90       1.16   203 1.00
+# sigmaR    1.10   0.09       0.96       1.24   317 1.00
+# sigmaG    0.32   0.19       0.00       0.57    54 1.00
+# sigmaItem 1.36   0.37       0.81       1.85   210 1.02
 
 # initial ratings? (Expl)
 
@@ -132,8 +144,16 @@ pM_exp <- map2stan(
   chains = 1, cores = 1)
 
 precis(pM_exp)
+# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# bIn       0.79   0.27       0.36       1.20   223 1.00
+# bInl      0.79   0.37       0.21       1.36   267 1.00
+# sigmaID   0.96   0.08       0.84       1.10   268 1.00
+# sigmaR    1.09   0.08       0.95       1.21   241 1.00
+# sigmaG    0.31   0.19       0.00       0.55    67 1.01
+# sigmaItem 1.29   0.33       0.81       1.75   272 1.00
 
-# A Priori Model
+
+##### A Priori Model
 pM_Apriori <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
@@ -168,7 +188,7 @@ plot(precis(pM_Apriori))
 pMFull <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
-    phi <- bS*ScoreC + b_o*OverConf + bI*Inflntl + bL*Liked + bN*nominated + 
+    phi <- bS*ScoreC + b_o*OverConfC + bI*Inflntl + bL*Liked + bN*nominated + 
       bIn*initInf + bInl*initLrn + bSx*Sex + bA*Age +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
@@ -186,6 +206,20 @@ pMFull <- map2stan(
   chains = 1, cores = 1)
 
 precis(pMFull)
+# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# bS        -0.02   0.02      -0.05       0.00   312 1.00
+# b_o       -0.01   0.01      -0.03       0.00   282 1.01
+# bI         3.07   0.46       2.31       3.76   281 1.01
+# bL         7.04   0.73       5.93       8.25   259 1.01
+# bN        -0.10   0.17      -0.40       0.14   331 1.00
+# bIn        0.29   0.18       0.02       0.58   356 1.00
+# bInl       0.48   0.23       0.16       0.87   255 1.00
+# bSx        0.15   0.16      -0.11       0.40   297 1.00
+# bA         0.01   0.00       0.00       0.02   258 1.00
+# sigmaID    0.50   0.06       0.40       0.59   229 1.01
+# sigmaR     1.06   0.08       0.93       1.19   215 1.00
+# sigmaG     0.17   0.12       0.00       0.34    78 1.01
+# sigmaItem  1.33   0.36       0.78       1.82   248 1.00
 plot(precis(pMFull))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 #WAIC pWAIC dWAIC weight     SE   dSE
@@ -222,13 +256,14 @@ gDomD$Score <- kernowResults$IndividScore[match(gDomD$rated_ID, kernowResults$ID
 gDomD$OverConf <- kernowResults$Overconfidence[match(gDomD$rated_ID,kernowResults$ID)]
 gDomD$nominated <- kernowResults$Nominated[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$initInf <- kernowResults$initial_influential[match(gDomD$rated_ID, kernowResults$ID)]
-gDomD$initLrn <- kernowResults$intial_learn[match(gDomD$rated_ID, kernowResults$ID)]
+gDomD$initLrn <- kernowResults$initial_learn[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$Liked <- kernowResults$aveLik[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$Inflntl <- kernowResults$aveInf[match(gDomD$rated_ID, kernowResults$ID)]
 
 
 #centre score & over confidence:
-gDomD$ScoreC <- gDomD$Score - mean(gDomD$Score)
+meanScore <- mean(gDomD$Score, na.rm = TRUE)
+gDomD$ScoreC <- gDomD$Score - meanScore
 gDomD$overconf <- gDomD$OverConf+40
 meanOConf <- mean(gDomD$overconf, na.rm = TRUE)
 gDomD$OverConfC <- gDomD$overconf - meanOConf
@@ -240,6 +275,9 @@ gDomD_NA$raterId <- coerce_index(gDomD_NA$rater_id)
 gDomD_NA$ratedID <- coerce_index(gDomD_NA$rated_ID)
 gDomD_NA$grpID <- coerce_index(gDomD_NA$Group)
 gDomD_NA$itemID <- coerce_index(gDomD_NA$domItem)
+
+write.csv(gDomD_NA, "gDomD_NA.csv")
+
 
 #Null
 dM_null <- map2stan(
@@ -282,6 +320,13 @@ dM_aPriori <- map2stan(
   chains = 1, cores = 1)
 
 precis(dM_aPriori)
+# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# b_o       0.02   0.01       0.00       0.04   529    1
+# bI        2.16   0.53       1.32       3.01   630    1
+# sigmaID   1.01   0.08       0.86       1.13   459    1
+# sigmaR    1.08   0.08       0.95       1.21   491    1
+# sigmaG    0.20   0.15       0.00       0.41   111    1
+# sigmaItem 1.60   0.45       0.89       2.13   466    1
 plot(precis(dM_aPriori))
 
 # initial ratings? (Expl)
@@ -352,8 +397,8 @@ plot(precis(dM_FULL))
 #sigmaItem  1.60   0.48       0.99       2.26   559    1
 
 compare(dM_null, dM_aPriori, dM_exp, dM_FULL)
-#WAIC pWAIC dWAIC weight     SE  dSE
-#dM_FULL    10374.7 228.7   0.0   0.78 114.56   NA
-#dM_aPriori 10379.1 231.5   4.4   0.09 114.51 3.28
-#dM_exp     10379.2 231.8   4.5   0.08 114.68 4.01
-#dM_null    10380.1 232.8   5.4   0.05 114.63 4.62
+# WAIC pWAIC dWAIC weight     SE  dSE
+# dM_FULL    10373.9 227.4   0.0   0.59 114.43   NA
+# dM_aPriori 10375.4 229.1   1.5   0.28 114.52 3.41
+# dM_null    10377.0 232.0   3.1   0.12 114.77 4.88
+# dM_exp     10383.4 234.6   9.5   0.01 114.75 4.10
