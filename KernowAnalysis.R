@@ -122,8 +122,8 @@ kernowResults$aveLik <- aveLik$x[match(kernowResults$ID, aveLik$Group.1)]
 #need to decide best way to scale overconfidence.. and score?
 
 kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
-kernowResults$Overconfidence <- kernowResults$Overconfidence + 40
-kernowResults$o_conf <- kernowResults$Overconfidence - mean(kernowResults$Overconfidence)
+kernowResults$OverC <- kernowResults$Overconfidence + 40
+kernowResults$o_conf <- kernowResults$OverC - mean(kernowResults$OverC)
 kernowResults$sScore <- kernowResults$IndividScore - mean(kernowResults$IndividScore)
 
 #Do we need to scale Age as well? 
@@ -156,24 +156,12 @@ pdRatings <- read.csv("pdRatings.csv")
 ####### should be able to use coerce index instead ####
 ##### First for the PD Ratings: 
 
-#James' Secret Code:
-NGroups = length(unique(pdRatings$Group))
-OldGroupID <- pdRatings$Group
-GroupID <- array(0,length(pdRatings$Group))
-for (index in 1:NGroups){
-  GroupID[OldGroupID == unique(OldGroupID)[index]] = index
-}
-pdRatings$GroupID <- GroupID
+pdRatings$GroupID <- coerce_index(pdRatings$Group)
 
 ### FOR PD ratings Rater ID's: 
 
-Nraters = length(unique(pdRatings$rater_id))
-OldRaterID <- pdRatings$rater_id
-RaterID <- array(0,length(pdRatings$rater_id))
-for (index in 1:Nraters){
-  RaterID[OldRaterID == unique(OldRaterID)[index]] = index
-}
-pdRatings$RaterID <- RaterID
+pdRatings$RaterID <- coerce_index(pdRatings$rater_id)
+
 
 ############# FOR KERNOW RESULTS GROUPS
 
@@ -248,6 +236,7 @@ commRatings$name <- gsub("999", 'na', commRatings$Name)
 commRatings$Name <- commRatings$name
 commRatings$name <- NULL
 write.csv(commRatings, "commRatings.csv")
+commRatings <- read.csv("commRatings.csv")
 
 inflNames <- c("The Queen", "Queen", "Queen Elizabeth", "Theresa May", "David Attenborough",
                "Jeremy Corbyn", "Donald Trump", "JK Rowling", "Ozzy Osbourne",
@@ -387,11 +376,18 @@ domPrest <- map2stan(
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
 precis(domPrest)
-
+# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# a        0.31   0.04       0.24       0.39   569 1.00
+# b_pres  -0.04   0.06      -0.12       0.06   572 1.00
+# sigma    0.16   0.01       0.16       0.17   520 1.00
+# sigma_p  0.06   0.01       0.04       0.08   232 1.00
+# sigma_g  0.00   0.04      -0.05       0.05    20 1.01
 
 plot(pdRatings$Dprop ~ pdRatings$Pprop)
 cor.test(pdRatings$Dprop, pdRatings$Pprop)
 cor(pdRatings$Dprop, pdRatings$Pprop)
+#[1] -0.05316162
+#p-value = 0.2262
 
 ############################################################
 ############################################################
@@ -404,11 +400,11 @@ cor(pdRatings$Dprop, pdRatings$Pprop)
 PresFull<- map2stan(
   alist(
     aveP ~ dnorm(mu, sigma),
-    mu <- a + score*IndividScore + o_conf*Overconfidence + infR*aveInf + lik*aveLik +
-      sex*Sex + age*ageS +
+    mu <- a + score*sScore + oConf*o_conf + infR*aveInf + lik*aveLik +
+      sex*Sex + age*ageS + initL*initial_learn + initInf*initial_influential + 
       a_g[GroupID]*sigma_g,
       a ~ dnorm(0,10),
-      c(score, o_conf, infR, lik, sex, age) ~ dnorm(0,1),
+      c(score, oConf, infR, lik, sex, age, initL, initInf) ~ dnorm(0,1),
       a_g[GroupID] ~ dnorm(0,1),
       sigma ~ dunif(0,10),
       sigma_g ~ dcauchy(0,1)

@@ -80,6 +80,8 @@ cronbach(DominanceRatings)
 hist(learnRatings$prestigeMean)
 hist(learnRatings$dominanceMean)
 
+cor.test(learnRatings$Pprop, learnRatings$Dprop)
+
 ##############################
 #############################
 ###### ORDINAL VERSION ######

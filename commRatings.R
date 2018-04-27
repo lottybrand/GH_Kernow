@@ -203,3 +203,5 @@ Queen <- presComm[presComm$Name %in% queenNames,]
 Qplot <- simplehist(Queen$prestigeRatings, xlim = c(1,7), xlab = "response")
 
 ##### cumulative likelihood plot more useful here than model?
+
+

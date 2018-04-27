@@ -83,9 +83,9 @@ gPresD$Inflntl <- kernowResults$aveInf[match(gPresD$rated_ID, kernowResults$ID)]
 #centre score & overconf
 meanScore <- mean(gPresD$Score, na.rm = TRUE)
 gPresD$ScoreC <- gPresD$Score - meanScore
-gPresD$overconf <- gPresD$OverConf+40
-meanOConf <- mean(gPresD$overconf, na.rm = TRUE)
-gPresD$OverConfC <- gPresD$overconf - meanOConf
+
+meanOConf <- mean(gPresD$OverConf, na.rm = TRUE)
+gPresD$OverConfC <- gPresD$OverConf - meanOConf
 
 gPresD_NA <- na.omit(gPresD)
 
@@ -222,11 +222,11 @@ precis(pMFull)
 # sigmaItem  1.33   0.36       0.78       1.82   248 1.00
 plot(precis(pMFull))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
-#WAIC pWAIC dWAIC weight     SE   dSE
-#pM_Apriori 11034.1 201.9   0.0   0.81 123.54    NA
-#pMFull     11037.0 202.8   2.8   0.19 123.97  4.43
-#pM_null    11054.7 224.5  20.6   0.00 123.63 10.64
-#pM_exp     11058.2 224.9  24.0   0.00 123.88 10.89
+# WAIC pWAIC dWAIC weight     SE   dSE
+# pMFull     11034.1 202.0   0.0   0.65 124.13    NA
+# pM_Apriori 11035.3 202.4   1.2   0.35 123.65  4.40
+# pM_null    11053.3 222.8  19.2   0.00 123.63 11.45
+# pM_exp     11054.7 223.4  20.6   0.00 123.92 10.74
 
 
 
@@ -264,9 +264,9 @@ gDomD$Inflntl <- kernowResults$aveInf[match(gDomD$rated_ID, kernowResults$ID)]
 #centre score & over confidence:
 meanScore <- mean(gDomD$Score, na.rm = TRUE)
 gDomD$ScoreC <- gDomD$Score - meanScore
-gDomD$overconf <- gDomD$OverConf+40
-meanOConf <- mean(gDomD$overconf, na.rm = TRUE)
-gDomD$OverConfC <- gDomD$overconf - meanOConf
+gDomD$OverConfC <- gDomD$OverConf+40
+meanOConf <- mean(gDomD$OverConfC, na.rm = TRUE)
+gDomD$OverConfC <- gDomD$OverConfC - meanOConf
 
 gDomD_NA <- na.omit(gDomD)
 
@@ -378,7 +378,7 @@ dM_FULL <- map2stan(
   data=gDomD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  chains = 3, cores = 3)
 
 precis(dM_FULL)
 plot(precis(dM_FULL))
@@ -402,3 +402,13 @@ compare(dM_null, dM_aPriori, dM_exp, dM_FULL)
 # dM_aPriori 10375.4 229.1   1.5   0.28 114.52 3.41
 # dM_null    10377.0 232.0   3.1   0.12 114.77 4.88
 # dM_exp     10383.4 234.6   9.5   0.01 114.75 4.10
+
+
+#### Plotting Overconfidence/dominance #####
+
+overlyConf <- gDomD_NA[gDomD_NA$OverConf > 0,]
+overly <- simplehist(overlyConf$dominanceRatings, xlab="over dominance")
+underConf <- gDomD_NA[gDomD_NA$OverConf < 0,]
+under <- simplehist(underConf$dominanceRatings, xlab="under dominance")
+
+#### 
