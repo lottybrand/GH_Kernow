@@ -96,6 +96,7 @@ gPresD_NA$grpID <- coerce_index(gPresD_NA$Group)
 gPresD_NA$itemID <- coerce_index(gPresD_NA$presItem)
 
 write.csv(gPresD_NA, "gPresD_NA.csv")
+gPresD_NA <- read.csv("gPresD_NA.csv")
 
 #Null
 pM_null <- map2stan(
@@ -205,7 +206,13 @@ pMFull <- map2stan(
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
   chains = 1, cores = 1)
 
-precis(pMFull)
+precis(pMFULL)
+precis_plot()
+
+saveRDS(pMFull, file = "SAVED_pMFULL.rds")
+save(pMFull, file = "plainSave_pMFULL")
+pMFULL <- readRDS("SAVED_pMFULL.rds")
+
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 # bS        -0.02   0.02      -0.05       0.00   312 1.00
 # b_o       -0.01   0.01      -0.03       0.00   282 1.01
@@ -382,6 +389,7 @@ dM_FULL <- map2stan(
 
 precis(dM_FULL)
 plot(precis(dM_FULL))
+
 #Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 #bs        -0.01   0.03      -0.05       0.03   877    1
 #b_o        0.02   0.01       0.00       0.05  1000    1
