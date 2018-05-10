@@ -121,9 +121,15 @@ kernowResults$aveLik <- aveLik$x[match(kernowResults$ID, aveLik$Group.1)]
 
 #need to decide best way to scale overconfidence.. and score?
 
-kernowResults$Overconfidence <- as.numeric(levels(kernowResults$Overconfidence))[as.integer(kernowResults$Overconfidence)]
 kernowResults$OverC <- kernowResults$Overconfidence + 40
-kernowResults$o_conf <- kernowResults$OverC - mean(kernowResults$OverC)
+kernowResults$OverCmean <- mean(kernowResults$OverC)
+kernowResults$OverC <- kernowResults$OverC - kernowResults$OverCmean
+kernowResults$OverCmean <- NULL
+kernowResults$o_conf <- kernowResults$OverC
+kernowResults$OverC <- NULL
+
+kernowResults$OConfBIN <- ifelse(kernowResults$Overconfidence >= 1, 1, 0)
+
 kernowResults$sScore <- kernowResults$IndividScore - mean(kernowResults$IndividScore)
 
 #Do we need to scale Age as well? 
@@ -170,6 +176,10 @@ kernowResults$GroupID <- coerce_index(kernowResults$Group)
 colnames(kernowResults)[18] <- "initial_learn"
 
 write.csv(kernowResults, "kernowResults.csv")
+##########
+##########
+kernowResults <- read.csv("kernowResults.csv")
+
 
 ######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
 

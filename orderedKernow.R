@@ -73,7 +73,7 @@ gPresD <- gPresD[order(gPresD$rated_ID),]
 #GREAT! OKay, this is lovely. 
 gPresD$Sex <- kernowResults$Sex[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$Score <- kernowResults$IndividScore[match(gPresD$rated_ID, kernowResults$ID)]
-gPresD$OverConf <- kernowResults$Overconfidence[match(gPresD$rated_ID,kernowResults$ID)]
+gPresD_NA$OverConf <- kernowResults$OConfBIN[match(gPresD_NA$rated_ID,kernowResults$ID)]
 gPresD$nominated <- kernowResults$Nominated[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$initInf <- kernowResults$initial_influential[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$initLrn <- kernowResults$initial_learn[match(gPresD$rated_ID, kernowResults$ID)]
@@ -207,7 +207,7 @@ pMFull <- map2stan(
   chains = 1, cores = 1)
 
 precis(pMFULL)
-precis_plot()
+plot(precis(pMFULL))
 
 saveRDS(pMFull, file = "SAVED_pMFULL.rds")
 save(pMFull, file = "plainSave_pMFULL")
@@ -260,7 +260,7 @@ gDomD <- gDomD[order(gDomD$rated_ID),]
 #GREAT! OKay, this is lovely. 
 gDomD$Sex <- kernowResults$Sex[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$Score <- kernowResults$IndividScore[match(gDomD$rated_ID, kernowResults$ID)]
-gDomD$OverConf <- kernowResults$Overconfidence[match(gDomD$rated_ID,kernowResults$ID)]
+gDomD_NA$OverConf <- kernowResults$OConfBIN[match(gDomD_NA$rated_ID,kernowResults$ID)]
 gDomD$nominated <- kernowResults$Nominated[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$initInf <- kernowResults$initial_influential[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$initLrn <- kernowResults$initial_learn[match(gDomD$rated_ID, kernowResults$ID)]
@@ -284,7 +284,7 @@ gDomD_NA$grpID <- coerce_index(gDomD_NA$Group)
 gDomD_NA$itemID <- coerce_index(gDomD_NA$domItem)
 
 write.csv(gDomD_NA, "gDomD_NA.csv")
-
+gDomD_NA <- read.csv("gDomD_NA.csv")
 
 #Null
 dM_null <- map2stan(
@@ -310,7 +310,7 @@ precis(dM_null)
 dM_aPriori <- map2stan(
   alist(
     dominanceRatings ~ dordlogit(phi, cutpoints),
-    phi <- b_o*OverConfC + bI*Inflntl +
+    phi <- b_o*OverConf + bI*Inflntl +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
     aG[grpID] ~ dnorm(0,1),
@@ -411,6 +411,9 @@ compare(dM_null, dM_aPriori, dM_exp, dM_FULL)
 # dM_null    10377.0 232.0   3.1   0.12 114.77 4.88
 # dM_exp     10383.4 234.6   9.5   0.01 114.75 4.10
 
+saveRDS(dM_FULL, file = "dMFULL.rds")
+
+dM_FULL <- readRDS("SAVED_dMFULL.rds")
 
 #### Plotting Overconfidence/dominance #####
 
@@ -420,3 +423,63 @@ underConf <- gDomD_NA[gDomD_NA$OverConf < 0,]
 under <- simplehist(underConf$dominanceRatings, xlab="under dominance")
 
 #### 
+##### trying taking out ID random effect to see effect on Age. 
+dM_MinusRandomID <- map2stan(
+  alist(
+    dominanceRatings ~ dordlogit(phi, cutpoints),
+    phi <- bs*Score + b_o*OverConfC + bI*Inflntl + bL*Liked + b_n*nominated +
+      bIn*initInf + bInlrn*initLrn + bsx*Sex + ba*Age +
+      aR[raterId]*sigmaR +
+      aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
+    aG[grpID] ~ dnorm(0,1),
+    aR[raterId] ~ dnorm(0,1),
+    aItem[itemID] ~ dnorm(0,1),
+    c(bs, b_o, bI, bL, bIn, bInlrn, bsx, ba, b_n) ~ dnorm(0,1),
+    c(sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gDomD_NA, 
+  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 1, cores = 3)
+
+precis(dM_MinusRandomID)
+plot(precis(dM_MinusRandomID))
+
+dM_MinusRandomANDitem <- map2stan(
+  alist(
+    dominanceRatings ~ dordlogit(phi, cutpoints),
+    phi <- bs*Score + b_o*OverConfC + bI*Inflntl + bL*Liked + b_n*nominated +
+      bIn*initInf + bInlrn*initLrn + bsx*Sex + ba*Age +
+      aR[raterId]*sigmaR + aG[grpID]*sigmaG,
+    aG[grpID] ~ dnorm(0,1),
+    aR[raterId] ~ dnorm(0,1),
+    c(bs, b_o, bI, bL, bIn, bInlrn, bsx, ba, b_n) ~ dnorm(0,1),
+    c(sigmaR, sigmaG) ~ dcauchy(0,1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gDomD_NA, 
+  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 1, cores = 3)
+
+precis(dM_MinusRandomANDitem)
+plot(precis(dM_MinusRandomANDitem))
+
+### single 
+
+dM_singleLevel <- map2stan(
+  alist(
+    dominanceRatings ~ dordlogit(phi, cutpoints),
+    phi <- bs*Score + b_o*OverConfC + bI*Inflntl + bL*Liked + b_n*nominated +
+      bIn*initInf + bInlrn*initLrn + bsx*Sex + ba*Age,
+    c(bs, b_o, bI, bL, bIn, bInlrn, bsx, ba, b_n) ~ dnorm(0,1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gDomD_NA, 
+  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 1, cores = 3)
+
+precis(dM_singleLevel)
+plot(precis(dM_singleLevel))
