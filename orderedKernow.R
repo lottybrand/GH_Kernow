@@ -206,7 +206,7 @@ plot(precis(pM_Apriori))
 pMFull <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
-    phi <- bS*ScoreCS + b_o*OConfBIN + bI*Inflntl + bL*Liked + bN*nominated + 
+    phi <- bS*ScoreCS + b_o*OverCS + bI*Inflntl + bL*Liked + bN*nominated + 
       bIn*initInf + bInl*initLrn + bSx*Sex + bA*AgeCS +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
@@ -232,19 +232,19 @@ save(pMFull, file = "plainSave_pMFULL")
 pMFULL <- readRDS("SAVED_pMFULL.rds")
 
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# bS        -0.06   0.06      -0.16       0.02   790 1.00
-# b_o       -0.06   0.14      -0.27       0.18   948 1.00
-# bI         0.45   0.06       0.36       0.55   792 1.00
-# bL         0.67   0.06       0.56       0.76   939 1.00
-# bN        -0.10   0.13      -0.30       0.12   960 1.00
-# bIn        0.31   0.15       0.05       0.52  1211 1.00
-# bInl       0.39   0.20       0.11       0.74  1293 1.00
-# bSx        0.17   0.12      -0.03       0.36   854 1.00
-# bA         0.15   0.08       0.02       0.29   526 1.01
-# sigmaID    0.39   0.04       0.33       0.46   774 1.00
-# sigmaR     0.77   0.04       0.70       0.84   710 1.00
-# sigmaG     0.10   0.07       0.00       0.19   288 1.01
-# sigmaItem  0.55   0.05       0.47       0.62   954 1.00
+# bS        -0.09   0.06      -0.19       0.01  1114 1.00
+# b_o       -0.07   0.06      -0.16       0.02  1046 1.00
+# bI         0.46   0.06       0.36       0.55   895 1.00
+# bL         0.67   0.06       0.57       0.76  1008 1.00
+# bN        -0.07   0.14      -0.30       0.13  1219 1.00
+# bIn        0.29   0.15       0.06       0.52  1456 1.00
+# bInl       0.41   0.20       0.07       0.70  1380 1.00
+# bSx        0.15   0.13      -0.06       0.34  1147 1.00
+# bA         0.16   0.08       0.02       0.28   721 1.00
+# sigmaID    0.39   0.04       0.32       0.46   972 1.00
+# sigmaR     0.77   0.04       0.70       0.84  1047 1.00
+# sigmaG     0.10   0.07       0.00       0.19   280 1.03
+# sigmaItem  0.54   0.05       0.47       0.62  1205 1.00
 
 plot(precis(pMFull))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)

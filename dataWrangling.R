@@ -8,7 +8,7 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 ################ THEN RE-SAVED AS pdRatings.csv so this is commented out and no longer needed
 #####
 
-#pdRatings <- read.csv("kernowResults220318.csv")
+#pdRatings <- read.csv("kernowResults_ratingsOnly.csv")
 
 ### Calculate p&d scores
 ### Reverse score items 2,6,10,12,17 as according to Cheng et al. 2013 (should really write a function for this..!!)
@@ -81,7 +81,7 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 #################
 
 pdRatings <- read.csv("pdRatings.csv")
-kernowResults <- read.delim("kernow_results_26_03_18_IDS.txt")
+kernowResults <- read.delim("kernow_results_RAW.txt")
 
 kernowResults[kernowResults == "na"] <- NA
 
