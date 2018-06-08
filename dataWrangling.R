@@ -69,11 +69,11 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 
 
 #subsets and cronbach test stuff
-PrestigeRatings <- subset(pdRatings, select = c(R1, R2rev, R4, R6rev, R8, R13, R14, R15, R17rev))
-DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R12rev, R16))
+#PrestigeRatings <- subset(pdRatings, select = c(R1, R2rev, R4, R6rev, R8, R13, R14, R15, R17rev))
+#DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R12rev, R16))
 
-cronbach(PrestigeRatings)
-cronbach(DominanceRatings)
+#cronbach(DominanceRatings)
+#cronbach(PrestigeRatings)
 
 
 ################# Now for combining with Kernow Results (IDS etc)
@@ -140,7 +140,8 @@ kernowResults$Age <- as.numeric(as.character(kernowResults$Age))
 kernowResults$AgeCS <- scale(kernowResults$Age, center = TRUE, scale = TRUE)
 
 #misspelt "initial" somewhere along the line..!
-colnames(kernowResults)[18] <- "initial_learn"
+colnames(kernowResults)
+colnames(kernowResults)[17] <- "initial_learn"
 
 ####### Use coerce index for group IDs etc  ####
 ##### First for the PD Ratings: 

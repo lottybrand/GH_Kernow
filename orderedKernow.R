@@ -5,6 +5,12 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 
 pdRatings <- read.csv("pdRatings.csv")
 kernowResults <- read.csv("kernowResults.csv")
+
+###### RESHAPING BELOW FOR ORDERED CATEGORICAL ANALYSIS OF ORDINAL RATINGS
+#####
+
+
+
 #for reference: the prestige and dominance items are:
 #PrestigeRatings <- subset(pdRatings, select = c(R1, R2rev, R4, R6rev, R8, R13, R14, R15, R17rev))
 #DominanceRatings <- subset(pdRatings, select = c(R3, R5, R7, R9, R10rev, R11, R12rev, R16))
@@ -28,15 +34,15 @@ kernowResults <- read.csv("kernowResults.csv")
 # 
 # dominance <- c("R3", "R5", "R7", "R9", "R10rev", "R11", "R12rev", "R16")
 # 
-# #hmmm this didn't work with pdSubLong instead of pdSub... 
 # pdSubLong2 <- reshape(pdSub, times = dominance,
 #                       varying = dominance,
 #                       v.names = c("dominanceRatings"),
 #                       direction = "long")
 # 
-# #now two diff datasets created, one with the prestige ratings, another with the dominance. Maybe that's fine...
+# #Two diff datasets created, one with the prestige ratings, another with the dominance
+# (There are more items in the prestige than the dominance scales)
+#
 # #delete unwated bits:
-# 
 # colnames(pdSubLong)
 # pdSubLong[,4:16] <- NULL
 # 
@@ -51,52 +57,62 @@ kernowResults <- read.csv("kernowResults.csv")
 # 
 # write.csv(gPresD, "gPresD.csv")
 # write.csv(gDomD, "gDomD.csv")
-
+#####
 gPresD <- read.csv("gPresD.csv")
 gDomD <- read.csv("gDomD.csv")
 
-#histPlots
-presPlot <- simplehist(gPresD$prestigeRatings, xlim = c(1,7), xlab = "response")
-domPlot <- simplehist(gDomD$dominanceRatings, xlim = c(1,7), xlab = "response")
-domPlot
+# Now we need to add the other info in from the other datasets for predictors.
+# We need, score, overconfidence, influence, likeability, sex, age, nominated 
 
-hist(kernowResults$Age, xlim = c(0,100), ylim = c(0,40), xlab = "Age")
-agePlot <- simplehist(kernowResults$Age, xlab = "Age")
-#okay let's try and add the other info in from the other datasets for predictors.
-#for Full prestige model, we need, score, overconfidence, influence, likeability, sex, age. 
-#and nominated tooo..
+##########
+########## PRESTIGE FILE FIRST
+##########
 
-#using match from the full kernowResults file: 
+#using match from the kernowResults file: 
 gPresD$Age <- kernowResults$Age[match(gPresD$rated_ID, kernowResults$ID)]
 #check using order:
 gPresD <- gPresD[order(gPresD$rated_ID),]
 #GREAT! OKay, this is lovely. 
 gPresD$Sex <- kernowResults$Sex[match(gPresD$rated_ID, kernowResults$ID)]
-gPresD$Score <- kernowResults$IndividScore[match(gPresD$rated_ID, kernowResults$ID)]
-gPresD$OverConf <- kernowResults$OConfBIN[match(gPresD$rated_ID,kernowResults$ID)]
 gPresD$nominated <- kernowResults$Nominated[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$initInf <- kernowResults$initial_influential[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$initLrn <- kernowResults$initial_learn[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$Liked <- kernowResults$aveLik[match(gPresD$rated_ID, kernowResults$ID)]
 gPresD$Inflntl <- kernowResults$aveInf[match(gPresD$rated_ID, kernowResults$ID)]
 
-#centre score & overconf
-meanScore <- mean(gPresD$Score, na.rm = TRUE)
-gPresD$ScoreC <- gPresD$Score - meanScore
+#May as well add centred and scaled versions straight away as these done previously:
+gPresD$ScoreCS <- kernowResults$ScoreCS[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$AgeCS <- kernowResults$AgeCS[match(gPresD$rated_ID, kernowResults$ID)]
+gPresD$OverCS <- kernowResults$OverCS[match(gPresD$rated_ID,kernowResults$ID)]
 
-meanOConf <- mean(gPresD$OverConf, na.rm = TRUE)
-gPresD$OverConfC <- gPresD$OverConf - meanOConf
+#now centre and scale liked and inflntl too: 
+gPresD$Liked <- scale(gPresD$Liked, center = TRUE, scale = TRUE)
+gPresD$Inflntl <- scale(gPresD$Inflntl, center = TRUE, scale = TRUE)
 
+#Overconfidence Binned
+gPresD$OConfBIN <- kernowResults$OConfBIN[match(gPresD$rated_ID,kernowResults$ID)]
+
+#remove NAs for Stan Models
 gPresD_NA <- na.omit(gPresD)
 
-#coerce_index 
+#coerce_index for random effecs 
 gPresD_NA$raterId <- coerce_index(gPresD_NA$rater_id)
 gPresD_NA$ratedID <- coerce_index(gPresD_NA$rated_ID)
 gPresD_NA$grpID <- coerce_index(gPresD_NA$Group)
 gPresD_NA$itemID <- coerce_index(gPresD_NA$presItem)
 
+#####
+###now ready to save! Can jump straight to here in future:
+#####
 write.csv(gPresD_NA, "gPresD_NA.csv")
 gPresD_NA <- read.csv("gPresD_NA.csv")
+
+#removing those extra weird dot columns (leftover from aggregate/match functions earlier on?)
+gPresD_NA$X.1 <- NULL
+gPresD_NA$X <- NULL
+#####
+#### On with the models!! 
+#####
 
 #Null
 pM_null <- map2stan(
@@ -114,7 +130,7 @@ pM_null <- map2stan(
   data=gPresD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  chains = 1, cores = 1, iter=800)
 
 precis(pM_null)
 #Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
@@ -158,21 +174,22 @@ precis(pM_exp)
 pM_Apriori <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
-    phi <- bS*ScoreC + bI*Inflntl + bL*Liked +
+    phi <- bS*ScoreCS + bI*Inflntl + bL*Liked +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
-    c(bS, bI, bL) ~ dnorm(0,10),
+    c(bS, bI, bL) ~ dnorm(0,1),
     aG[grpID] ~ dnorm(0,1),
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gPresD_NA, 
-  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
+  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"), 
+  control=list(adapt_delta=0.99, max_treedepth=13), 
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  chains = 3, cores = 3, iter=800)
 
 precis(pM_Apriori)
 plot(precis(pM_Apriori))
@@ -189,44 +206,46 @@ plot(precis(pM_Apriori))
 pMFull <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
-    phi <- bS*ScoreC + b_o*OverConfC + bI*Inflntl + bL*Liked + bN*nominated + 
-      bIn*initInf + bInl*initLrn + bSx*Sex + bA*Age +
+    phi <- bS*ScoreCS + b_o*OConfBIN + bI*Inflntl + bL*Liked + bN*nominated + 
+      bIn*initInf + bInl*initLrn + bSx*Sex + bA*AgeCS +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
-    c(bS, b_o, bI, bL, bN, bIn, bInl, bSx, bA) ~ dnorm(0,10),
+    c(bS, b_o, bI, bL, bN, bIn, bInl, bSx, bA) ~ dnorm(0,1),
     aG[grpID] ~ dnorm(0,1),
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gPresD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
 
-precis(pMFULL)
-plot(precis(pMFULL))
+precis(pMFull)
+plot(precis(pMFull))
 
 saveRDS(pMFull, file = "SAVED_pMFULL.rds")
 save(pMFull, file = "plainSave_pMFULL")
 pMFULL <- readRDS("SAVED_pMFULL.rds")
 
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# bS        -0.02   0.02      -0.05       0.00   312 1.00
-# b_o       -0.01   0.01      -0.03       0.00   282 1.01
-# bI         3.07   0.46       2.31       3.76   281 1.01
-# bL         7.04   0.73       5.93       8.25   259 1.01
-# bN        -0.10   0.17      -0.40       0.14   331 1.00
-# bIn        0.29   0.18       0.02       0.58   356 1.00
-# bInl       0.48   0.23       0.16       0.87   255 1.00
-# bSx        0.15   0.16      -0.11       0.40   297 1.00
-# bA         0.01   0.00       0.00       0.02   258 1.00
-# sigmaID    0.50   0.06       0.40       0.59   229 1.01
-# sigmaR     1.06   0.08       0.93       1.19   215 1.00
-# sigmaG     0.17   0.12       0.00       0.34    78 1.01
-# sigmaItem  1.33   0.36       0.78       1.82   248 1.00
+# bS        -0.06   0.06      -0.16       0.02   790 1.00
+# b_o       -0.06   0.14      -0.27       0.18   948 1.00
+# bI         0.45   0.06       0.36       0.55   792 1.00
+# bL         0.67   0.06       0.56       0.76   939 1.00
+# bN        -0.10   0.13      -0.30       0.12   960 1.00
+# bIn        0.31   0.15       0.05       0.52  1211 1.00
+# bInl       0.39   0.20       0.11       0.74  1293 1.00
+# bSx        0.17   0.12      -0.03       0.36   854 1.00
+# bA         0.15   0.08       0.02       0.29   526 1.01
+# sigmaID    0.39   0.04       0.33       0.46   774 1.00
+# sigmaR     0.77   0.04       0.70       0.84   710 1.00
+# sigmaG     0.10   0.07       0.00       0.19   288 1.01
+# sigmaItem  0.55   0.05       0.47       0.62   954 1.00
+
 plot(precis(pMFull))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 # WAIC pWAIC dWAIC weight     SE   dSE
@@ -239,52 +258,57 @@ compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 
 ############################
 ############################
-############################
-############################
 #### Dominance Models ######
 ############################
 ###########################
-############################
-###########################
 
-#and what about adding gDomD to gPresD now using match?
-###CAN'T DO THAT IT's A DIFF NUMBER OF ITEMS. ??RIGHT?
+#Need to match with the other factors like for gPresD above:
 
-#So need to go back through with each like for gPresD:
-
-
-#using match from the full kernowResults file: 
 gDomD$Age <- kernowResults$Age[match(gDomD$rated_ID, kernowResults$ID)]
 #check using order:
 gDomD <- gDomD[order(gDomD$rated_ID),]
 #GREAT! OKay, this is lovely. 
 gDomD$Sex <- kernowResults$Sex[match(gDomD$rated_ID, kernowResults$ID)]
-gDomD$Score <- kernowResults$IndividScore[match(gDomD$rated_ID, kernowResults$ID)]
-gDomD_NA$OverConf <- kernowResults$OConfBIN[match(gDomD_NA$rated_ID,kernowResults$ID)]
 gDomD$nominated <- kernowResults$Nominated[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$initInf <- kernowResults$initial_influential[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$initLrn <- kernowResults$initial_learn[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$Liked <- kernowResults$aveLik[match(gDomD$rated_ID, kernowResults$ID)]
 gDomD$Inflntl <- kernowResults$aveInf[match(gDomD$rated_ID, kernowResults$ID)]
 
+#May as well add centred and scaled versions straight away as these done previously:
+gDomD$ScoreCS <- kernowResults$ScoreCS[match(gDomD$rated_ID, kernowResults$ID)]
+gDomD$AgeCS <- kernowResults$AgeCS[match(gDomD$rated_ID, kernowResults$ID)]
+gDomD$OverCS <- kernowResults$OverCS[match(gDomD$rated_ID,kernowResults$ID)]
 
-#centre score & over confidence:
-meanScore <- mean(gDomD$Score, na.rm = TRUE)
-gDomD$ScoreC <- gDomD$Score - meanScore
-gDomD$OverConfC <- gDomD$OverConf+40
-meanOConf <- mean(gDomD$OverConfC, na.rm = TRUE)
-gDomD$OverConfC <- gDomD$OverConfC - meanOConf
+#now centre and scale liked and inflntl too: 
+gDomD$Liked <- scale(gDomD$Liked, center = TRUE, scale = TRUE)
+gDomD$Inflntl <- scale(gDomD$Inflntl, center = TRUE, scale = TRUE)
 
+#Overconfidence Binned
+gDomD$OConfBIN <- kernowResults$OConfBIN[match(gDomD$rated_ID,kernowResults$ID)]
+
+#remove NAs for Stan Models
 gDomD_NA <- na.omit(gDomD)
 
-#coerce_index 
+#coerce_index for random effecs 
 gDomD_NA$raterId <- coerce_index(gDomD_NA$rater_id)
 gDomD_NA$ratedID <- coerce_index(gDomD_NA$rated_ID)
 gDomD_NA$grpID <- coerce_index(gDomD_NA$Group)
 gDomD_NA$itemID <- coerce_index(gDomD_NA$domItem)
 
+#####
+##### Now you can write and skip to this for model running next time:
 write.csv(gDomD_NA, "gDomD_NA.csv")
 gDomD_NA <- read.csv("gDomD_NA.csv")
+
+##### remove those extra columns from processing:
+gDomD_NA$X.1 <- NULL
+gDomD_NA$X <- NULL
+
+#####
+#####
+#### On to the models!
+#####
 
 #Null
 dM_null <- map2stan(
@@ -307,10 +331,10 @@ dM_null <- map2stan(
 precis(dM_null)
 
 # A Priori
-dM_aPriori <- map2stan(
+dM_aPriori2 <- map2stan(
   alist(
     dominanceRatings ~ dordlogit(phi, cutpoints),
-    phi <- b_o*OverConf + bI*Inflntl +
+    phi <- b_o*OverCS + bI*Inflntl +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
     aG[grpID] ~ dnorm(0,1),
@@ -318,23 +342,27 @@ dM_aPriori <- map2stan(
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
     c(b_o, bI) ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gDomD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
 
-precis(dM_aPriori)
+precis(dM_aPriori2)
+
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# b_o       0.02   0.01       0.00       0.04   529    1
-# bI        2.16   0.53       1.32       3.01   630    1
-# sigmaID   1.01   0.08       0.86       1.13   459    1
-# sigmaR    1.08   0.08       0.95       1.21   491    1
-# sigmaG    0.20   0.15       0.00       0.41   111    1
-# sigmaItem 1.60   0.45       0.89       2.13   466    1
-plot(precis(dM_aPriori))
+# b_o       0.12   0.07       0.01       0.25   539 1.00
+# bI        0.46   0.07       0.35       0.58   748 1.00
+# sigmaID   0.72   0.05       0.64       0.79   799 1.00
+# sigmaR    0.77   0.04       0.71       0.84   984 1.00
+# sigmaG    0.09   0.07       0.00       0.18   398 1.00
+# sigmaItem 0.58   0.05       0.50       0.66   708 1.01
+
+precis(dM_aPriori2)
+plot(precis(dM_aPriori2))
 
 # initial ratings? (Expl)
 
@@ -370,8 +398,8 @@ precis(dM_exp)
 dM_FULL <- map2stan(
   alist(
     dominanceRatings ~ dordlogit(phi, cutpoints),
-    phi <- bs*Score + b_o*OverConfC + bI*Inflntl + bL*Liked + b_n*nominated +
-      bIn*initInf + bInlrn*initLrn + bsx*Sex + ba*Age +
+    phi <- bs*ScoreCS + b_o*OverCS + bI*Inflntl + bL*Liked + b_n*nominated +
+      bIn*initInf + bInlrn*initLrn + bsx*Sex + ba*AgeCS +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
     aG[grpID] ~ dnorm(0,1),
@@ -379,30 +407,32 @@ dM_FULL <- map2stan(
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
     c(bs, b_o, bI, bL, bIn, bInlrn, bsx, ba, b_n) ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gDomD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 3, cores = 3)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(dM_FULL)
 plot(precis(dM_FULL))
 
-#Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-#bs        -0.01   0.03      -0.05       0.03   877    1
-#b_o        0.02   0.01       0.00       0.05  1000    1
-#bI         2.31   0.57       1.30       3.13   810    1
-#bL        -2.29   0.75      -3.41      -1.04  1000    1
-#bIn        0.55   0.26       0.15       0.95  1000    1
-#bInlrn    -0.11   0.35      -0.67       0.43  1000    1
-#bsx        0.27   0.22      -0.12       0.57  1000    1
-#ba         0.02   0.01       0.00       0.02   591    1
-#sigmaID    0.90   0.08       0.78       1.04   253    1
-#sigmaR     1.09   0.08       0.98       1.24   520    1
-#sigmaG     0.24   0.18       0.00       0.48   110    1
-#sigmaItem  1.60   0.48       0.99       2.26   559    1
+# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# bs        -0.11   0.08      -0.25       0.01   709 1.00
+# b_o        0.09   0.07      -0.03       0.21   748 1.01
+# bI         0.55   0.08       0.43       0.69   735 1.00
+# bL        -0.48   0.08      -0.60      -0.36   863 1.00
+# bIn        0.49   0.20       0.16       0.80   623 1.00
+# bInlrn    -0.08   0.27      -0.51       0.33   750 1.00
+# bsx        0.26   0.17       0.00       0.52   533 1.01
+# ba         0.26   0.10       0.10       0.42   564 1.00
+# b_n        0.04   0.19      -0.25       0.34   860 1.00
+# sigmaID    0.62   0.05       0.55       0.69   821 1.01
+# sigmaR     0.78   0.04       0.71       0.85   773 1.00
+# sigmaG     0.12   0.08       0.00       0.23   260 1.00
+# sigmaItem  0.59   0.05       0.51       0.67  1258 1.00
 
 compare(dM_null, dM_aPriori, dM_exp, dM_FULL)
 # WAIC pWAIC dWAIC weight     SE  dSE
@@ -415,9 +445,10 @@ saveRDS(dM_FULL, file = "dMFULL.rds")
 
 dM_FULL <- readRDS("SAVED_dMFULL.rds")
 
-#### Plotting Overconfidence/dominance #####
 
-overlyConf <- gDomD_NA[gDomD_NA$OverConf > 0,]
-overly <- simplehist(overlyConf$dominanceRatings, xlab="over dominance")
-underConf <- gDomD_NA[gDomD_NA$OverConf < 0,]
-under <- simplehist(underConf$dominanceRatings, xlab="under dominance")
+#histPlots
+presPlot <- simplehist(gPresD$prestigeRatings, xlim = c(1,7), xlab = "response")
+presPlot
+domPlot <- simplehist(gDomD$dominanceRatings, xlim = c(1,7), xlab = "response")
+domPlot
+agePlot <- simplehist(kernowResults$Age, xlab = "Age")
