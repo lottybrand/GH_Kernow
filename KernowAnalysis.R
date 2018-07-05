@@ -418,7 +418,8 @@ nominatedFull <- map2stan(
   control=list(adapt_delta=0.99, max_treedepth=13),
   chains = 3, cores = 3, iter = 1200)
 
-
+precis(nominatedFull)
+plot(precis(nominatedFull))
 precis(nominatedFull)
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 # a         -1.55   0.39      -2.17      -0.96  1800    1

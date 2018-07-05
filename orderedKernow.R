@@ -1,7 +1,7 @@
 #playing with kernow ordered logit
 library(rethinking)
 
-setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
+setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/DataFiles")
 
 pdRatings <- read.csv("pdRatings.csv")
 kernowResults <- read.csv("kernowResults.csv")
@@ -246,7 +246,7 @@ pMFULL <- readRDS("SAVED_pMFULL.rds")
 # sigmaG     0.10   0.07       0.00       0.19   280 1.03
 # sigmaItem  0.54   0.05       0.47       0.62  1205 1.00
 
-plot(precis(pMFull))
+plot(precis(pMFULL))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 # WAIC pWAIC dWAIC weight     SE   dSE
 # pMFull     11034.1 202.0   0.0   0.65 124.13    NA
@@ -445,10 +445,156 @@ saveRDS(dM_FULL, file = "dMFULL.rds")
 
 dM_FULL <- readRDS("SAVED_dMFULL.rds")
 
+########
+##### PLOTTING for public engagement event
+###### experimental plotting
 
 #histPlots
 presPlot <- simplehist(gPresD$prestigeRatings, xlim = c(1,7), xlab = "response")
 presPlot
 domPlot <- simplehist(gDomD$dominanceRatings, xlim = c(1,7), xlab = "response")
 domPlot
-agePlot <- simplehist(kernowResults$Age, xlab = "Age")
+agePlot <- hist(kernowResults$Age, xlab = "Age", ylab = "Total number of Participants", xlim = c(0,100), 
+                main = "Age Range", ylim = c(0,35),col = "seagreen", cex.lab = 1.4, cex.axis = 1, cex.main =2)
+
+sexPlot <- plot(kernowResults$Gender, xlab = "Gender", ylab = "Total number of Participants", col = "seagreen",
+                main = "Gender Split", ylim = c(0,100), cex.lab = 1.4, cex.axis = 1, cex.main =2)
+
+
+plot(kernowResults$Gender)
+
+nomPlot <- ggplot(kernowResults, aes(IndividScore, Nominated)) +
+  stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Proportion of Nominations") +
+  xlab("Individual Quiz Score") +
+  scale_y_continuous(limits=c(0,1))
+nomPlot
+
+presPlot <- ggplot(kernowResults, aes(aveP, initial_influential)) +
+  stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Prestige Score") +
+  xlab("Influential Group Member") +
+  scale_y_continuous(limits=c(0,1))
+presPlot
+
+presPlot2 <- ggplot(data = kernowResults) + 
+  stat_summary(
+    mapping = aes(x = initial_influential, y = aveP),
+    fun.ymin = min,
+    fun.ymax = max,
+    fun.y = median
+  )
+presPlot2
+
+kernowResults$influential_grp <- ifelse(kernowResults$initial_influential==1,"yes","no")
+
+presPlot3 <- ggplot(data = kernowResults, mapping = aes(x=influential_grp,y = aveP)) + 
+  geom_boxplot()
+presPlot3
+
+
+presPlot4 <- ggplot(gPresD_NA, aes(prestigeRatings, initInf)) +
+  stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Voted influential to the Group") +
+  xlab("Prestige Score") + 
+  scale_y_continuous(limits=c(0,1))
+presPlot4
+
+
+
+meanPres <- tapply(gPresD_NA$prestigeRatings, list(gPresD_NA$initInf),mean)
+table(meanPres)
+table(gPresD_NA$initInf)
+
+#####
+## Violins
+kernowResults$percP <- kernowResults$aveP*100
+kernowResults$percD <- kernowResults$aveD*100
+
+p <- ggplot(kernowResults, aes(factor(influential_grp), percP)) +  geom_violin(fill="seagreen") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Prestige Score %") +
+  xlab("Influential group member to begin with") + 
+  scale_y_continuous(limits=c(0,100))
+p
+
+d <- ggplot(kernowResults, aes(factor(influential_grp), percD)) +  geom_violin(fill="seagreen") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Dominance Score %") +
+  xlab("Influential group member to begin with") + 
+  scale_y_continuous(limits=c(0,100))
+d
+
+#violin from all Raw (Not using)
+p1 <- ggplot(gPresD_NA, aes(factor(initInf), prestigeRatings)) +  geom_violin(fill="seagreen") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Prestige Score") +
+  xlab("Influential group member to begin with") 
+p1
+
+plot(kernowResults$aveP ~ kernowResults$Age)
+
+#influential plots:
+#Prestige:
+
+initInf <- gPresD_NA[gPresD_NA$initInf == 1,]
+hist(initInf$prestigeRatings, main = paste("Influential to begin with"), col = "blue", labels = FALSE, xlab = "Prestige Rating", ylab = "Total")
+NinitInf <- gPresD_NA[gPresD_NA$initInf ==0,]
+hist(NinitInf$prestigeRatings, main = paste("NOT influential to begin with"), col = "blue", labels = FALSE, xlab = "Prestige Rating", ylab = "Total")
+
+#Dominance:
+initInfD <- gDomD_NA[gDomD_NA$initInf == 1,]
+hist(initInfD$dominanceRatings, main = paste("Influential to begin with"), col = "blue", labels = FALSE, xlab = "Dominance Rating", ylab = "Total")
+NinitInfD <- gDomD_NA[gDomD_NA$initInf ==0,]
+hist(NinitInfD$dominanceRatings, main = paste("NOT influential to begin with"), col = "blue", labels = FALSE, xlab = "Dominance Rating", ylab = "Total")
+
+hist(kernowResults$percD, main = paste("Dominance Ratings"), col = "seagreen", labels = FALSE, xlab = "Dominance %", ylab = "Total people", xlim = c(0,100), ylim = c(0,50), freq = TRUE)
+hist(kernowResults$percP, main = paste("Prestige Ratings"), col = "seagreen", labels = FALSE, xlab = "Prestige %", ylab = "Total people", xlim = c(0,100), ylim = c(0,35), freq = TRUE)
+
+likPPlot <- ggplot(gPresD_NA, aes(Liked, prestigeRatings)) +
+  stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  scale_y_continuous(limits=c(0,7))
+likPPlot
+
+likDplot <- ggplot(gDomD_NA, aes(Liked, dominanceRatings)) +
+  stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  scale_y_continuous(limits=c(0,7))
+likDplot
+
+#####
+###### Looking at per group stuff 
+
+#### Highest Dominance score of any individual? look at their group:
+mostDom <- kernowResults[order(kernowResults$aveD, decreasing = TRUE), ]
+mostPres <- kernowResults[order(kernowResults$aveP, decreasing = TRUE),]
+
+grp18 <- kernowResults[kernowResults$Group==18,]
+plot(grp18$aveD ~ grp18$ID, ylim = c(0,1))
+
+grp16 <- kernowResults[kernowResults$Group==16,]
+plot(grp16$aveD ~ grp16$ID, ylim = c(0,1))
+
+# order via dominance within group 
+perGroup <- kernowResults[order(kernowResults$Group,kernowResults$percD),]
+perGroup$ID_G<-sequence(rle(perGroup$Group)$length) 
+
+perGroup$Group <- as.factor(perGroup$Group)
+highestDomPlot <- ggplot(data = perGroup, mapping = aes(x = ID_G, y = percD)) + 
+  geom_smooth(mapping = aes(color = Group)) + theme_bw() 
+highestDomPlot
+
+#order for Prestige
+perGroupP <- kernowResults[order(kernowResults$Group,kernowResults$percP),]
+perGroupP$ID_G<-sequence(rle(perGroupP$Group)$length) 
+
+perGroupP$Group <- as.factor(perGroupP$Group)
+highestPresPlot <- ggplot(data = perGroupP, mapping = aes(x = ID_G, y = percP)) + 
+  geom_smooth(mapping = aes(color = Group)) + theme_bw() 
+highestPresPlot
+
+
