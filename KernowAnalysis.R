@@ -280,7 +280,7 @@ precis(PresNull)
 
 compare(PresNull,PresFull,PresAPriori)
 
-##### (This is 'Nominated' from the OSF 'full model'? 'inital influential?' #####
+#### (This is 'Nominated' from the OSF 'full model'? 'inital influential?' #####
 
 
 PresInitial <- map2stan(
@@ -393,19 +393,22 @@ compare(DomFull, DomNull, DomAPriori, DomInit)
 #### centre and scale aveInf aveLik aveP and aveD too
 #####
 
-kernowResults$aveDcs <- scale(kernowResults$aveD, center = TRUE, scale = TRUE)
-kernowResults$avePcs <- scale(kernowResults$aveP, center = TRUE, scale = TRUE)
-kernowResults$aveInfCS <- scale(kernowResults$aveInf, center = TRUE, scale = TRUE)
-#crap forgot to add CS to end, fix later:
-kernowResults$aveLik <- scale(kernowResults$aveLik, center = TRUE, scale = TRUE)
+#kernowResults$aveDcs <- scale(kernowResults$aveD, center = TRUE, scale = TRUE)
+#kernowResults$avePcs <- scale(kernowResults$aveP, center = TRUE, scale = TRUE)
+#kernowResults$aveInfCS <- scale(kernowResults$aveInf, center = TRUE, scale = TRUE)
+#kernowResults$aveLikCS <- scale(kernowResults$aveLik, center = TRUE, scale = TRUE)
 
-kernowResults <- na.omit(kernowResults)
+#write.csv(kernowResults,"kernowResults.csv")
+kernowResults <- read.csv("kernowResults.csv")
+kernowResults$X.1 <- NULL
+kernowResults$X <- NULL
+
 ##### Full Model: 
 
 nominatedFull <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + score*ScoreCS + conf*OverCS + 
-          prestige*avePcs + Dominance*aveDcs + infR*aveInfCS + lik*aveLik + 
+          prestige*avePcs + Dominance*aveDcs + infR*aveInfCS + lik*aveLikCS + 
           infl*initial_influential + inLearn*initial_learn + 
           age*AgeCS + sex*Sex + a_g[GroupID]*sigma_g,
         a ~ dnorm(0,1),
@@ -420,7 +423,7 @@ nominatedFull <- map2stan(
 
 precis(nominatedFull)
 plot(precis(nominatedFull))
-precis(nominatedFull)
+
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 # a         -1.55   0.39      -2.17      -0.96  1800    1
 # sigma_g    0.08   0.06       0.00       0.15  1800    1
@@ -442,11 +445,14 @@ nominatedNull <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + 
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1)
+        sigma_g ~ normal(0,0.1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nominatedNull)
 
@@ -457,14 +463,17 @@ precis(nominatedNull)
 nomPres <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + 
-          prestige*aveP +
+          prestige*avePcs +
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
+        sigma_g ~ normal(0,0.1),
         prestige ~ dnorm(0,1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nomPres)
 
@@ -474,14 +483,17 @@ precis(nomPres)
 nomDom <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + 
-          Dominance*aveD +
+          Dominance*aveDcs +
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
+        sigma_g ~ normal(0,0.1),
         Dominance ~ dnorm(0,1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nomDom)
 
@@ -490,14 +502,17 @@ precis(nomDom)
 
 nomLik <- map2stan(
   alist(Nominated ~ dbinom(1,p),
-        logit(p) <- a + lik*aveLik + 
+        logit(p) <- a + lik*aveLikCS + 
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
+        sigma_g ~ normal(0,0.1),
         lik ~ dnorm(0,1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nomLik)
 
@@ -508,12 +523,15 @@ nomInf <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + infR*aveInf + 
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
+        sigma_g ~ normal(0,0.1),
         infR ~ dnorm(0,1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nomInf)
 
@@ -525,12 +543,15 @@ nomPrevious <- map2stan(
   alist(Nominated ~ dbinom(1,p),
         logit(p) <- a + infl*initial_influential + inLearn*initial_learn + 
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
+        sigma_g ~ normal(0,0.1),
         c(infl, inLearn) ~ dnorm(0,1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nomPrevious)
 
@@ -541,28 +562,31 @@ compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevio
 
 nomSCORE <- map2stan(
   alist(Nominated ~ dbinom(1,p),
-        logit(p) <- a + score*sScore + oconf*o_conf + 
+        logit(p) <- a + score*ScoreCS + oconf*OverCS + 
           a_g[GroupID]*sigma_g,
-        a ~ dnorm(0,10),
+        a ~ dnorm(0,1),
         a_g[GroupID] ~ dnorm(0,1),
-        sigma_g ~ dcauchy(0,1),
+        sigma_g ~ normal(0,0.1),
         c(score, oconf) ~ dnorm(0,1)
   ),
-  data=kernowResults, warmup = 1000, iter=2000, chains=1, cores = 1)
+  data=kernowResults,
+  constraints = list(sigma_g = "lower=0"),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter = 1200)
 
 precis(nomSCORE)
 compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious, nomSCORE)
 
 
 #WAIC pWAIC dWAIC weight    SE   dSE
-#nominatedFull 121.1   7.6   0.0   0.82 14.42    NA
-#nomSCORE      125.0   4.5   4.0   0.11 14.93  3.28
-#nomInf        126.2   2.1   5.1   0.06 11.56 10.10
-#nomPrevious   140.7   3.7  19.6   0.00 13.47  9.82
-#nomDom        141.0   2.3  19.9   0.00 13.12 10.89
-#nomPres       142.1   2.1  21.0   0.00 13.21 10.57
-#nominatedNull 142.4   2.1  21.3   0.00 13.22 10.58
-#nomLik        143.0   2.5  22.0   0.00 13.26 10.63
+#nominatedFull 108.6   9.2   0.0      1 13.43    NA
+#nomSCORE      122.8   2.9  14.3      0 13.22  9.20
+#nomInf        130.3   1.3  21.7      0 11.00  9.97
+#nomDom        138.6   1.9  30.0      0 12.64 11.92
+#nomPrevious   138.9   2.5  30.3      0 12.59 10.99
+#nominatedNull 140.6   1.1  32.0      0 12.37 11.44
+#nomPres       141.0   2.0  32.4      0 12.68 11.46
+#nomLik        142.7   2.3  34.1      0 12.78 11.59
 
 plot(precis(nominatedFull, pars = c("a", "score", "oconf", "prestige", "Dominance", "infR","lik","infl","inLearn","age","sex")))
 
