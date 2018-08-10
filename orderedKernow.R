@@ -227,6 +227,8 @@ pMFull <- map2stan(
 precis(pMFull)
 plot(precis(pMFull))
 
+plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o"), labels=c("Confidence","Score","Sex","Age","Learning model","Initially influential","Likeability","Influence"))
+
 saveRDS(pMFull, file = "SAVED_pMFULL.rds")
 save(pMFull, file = "plainSave_pMFULL")
 pMFULL <- readRDS("SAVED_pMFULL.rds")
@@ -597,4 +599,26 @@ highestPresPlot <- ggplot(data = perGroupP, mapping = aes(x = ID_G, y = percP)) 
   geom_smooth(mapping = aes(color = Group)) + theme_bw() 
 highestPresPlot
 
+#plotting men and women's overconfidence
+confSexPlot <- ggplot(kernowResults, aes(factor(Gender), Overconfidence)) +  geom_violin(fill="seagreen") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Conf") +
+  xlab("Gender") + 
+  scale_y_continuous(limits=c(-40,40))
+confSexPlot
 
+#plotting men and women's score
+scoreSexPlot <- ggplot(kernowResults, aes(factor(Gender), IndividScore)) +  geom_violin(fill="seagreen") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Score") +
+  xlab("Gender") + 
+  scale_y_continuous(limits=c(0,40))
+scoreSexPlot
+
+#plotting men and women's likeability
+likeSexPlot <- ggplot(kernowResults, aes(factor(Gender), aveLik)) +  geom_violin(fill="seagreen") +
+  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+  ylab("Liked") +
+  xlab("Gender") + 
+  scale_y_continuous(limits=c(0,1))
+likeSexPlot
