@@ -1,10 +1,10 @@
-#playing with kernow ordered logit
+# THESE ARE THE ORDERED CATEGORICAL VERSIONS OF THE MODELS 
 library(rethinking)
 
 setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/DataFiles")
 
-pdRatings <- read.csv("pdRatings.csv")
-kernowResults <- read.csv("kernowResults.csv")
+#pdRatings <- read.csv("pdRatings.csv")
+#kernowResults <- read.csv("kernowResults.csv")
 
 ###### RESHAPING BELOW FOR ORDERED CATEGORICAL ANALYSIS OF ORDINAL RATINGS
 #####
@@ -104,12 +104,9 @@ gPresD_NA$itemID <- coerce_index(gPresD_NA$presItem)
 #####
 ###now ready to save! Can jump straight to here in future:
 #####
-write.csv(gPresD_NA, "gPresD_NA.csv")
+#write.csv(gPresD_NA, "gPresD_NA.csv", row.names=FALSE)
 gPresD_NA <- read.csv("gPresD_NA.csv")
 
-#removing those extra weird dot columns (leftover from aggregate/match functions earlier on?)
-gPresD_NA$X.1 <- NULL
-gPresD_NA$X <- NULL
 #####
 #### On with the models!! 
 #####
@@ -124,13 +121,14 @@ pM_null <- map2stan(
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gPresD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1, iter=800)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
 
 precis(pM_null)
 #Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
@@ -147,18 +145,19 @@ pM_exp <- map2stan(
     phi <-  bIn*initInf + bInl*initLrn +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
-    c(bIn, bInl) ~ dnorm(0,10),
+    c(bIn, bInl) ~ dnorm(0,1),
     aG[grpID] ~ dnorm(0,1),
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gPresD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
 
 precis(pM_exp)
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
@@ -189,7 +188,7 @@ pM_Apriori <- map2stan(
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"), 
   control=list(adapt_delta=0.99, max_treedepth=13), 
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 3, cores = 3, iter=800)
+  chains = 3, cores = 3, iter=1200)
 
 precis(pM_Apriori)
 plot(precis(pM_Apriori))
@@ -229,31 +228,28 @@ plot(precis(pMFull))
 
 plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o","bN"), labels=c("Nominated","Confidence","Score","Sex","Age","Learning model","Initially influential","Likeability","Influence"))
 
-saveRDS(pMFull, file = "SAVED_pMFuLL.rds")
-save(pMFull, file = "plainSave_pMFULL")
-
-# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# bS        -0.09   0.06      -0.19       0.01  1114 1.00
-# b_o       -0.07   0.06      -0.16       0.02  1046 1.00
-# bI         0.46   0.06       0.36       0.55   895 1.00
-# bL         0.67   0.06       0.57       0.76  1008 1.00
-# bN        -0.07   0.14      -0.30       0.13  1219 1.00
-# bIn        0.29   0.15       0.06       0.52  1456 1.00
-# bInl       0.41   0.20       0.07       0.70  1380 1.00
-# bSx        0.15   0.13      -0.06       0.34  1147 1.00
-# bA         0.16   0.08       0.02       0.28   721 1.00
-# sigmaID    0.39   0.04       0.32       0.46   972 1.00
-# sigmaR     0.77   0.04       0.70       0.84  1047 1.00
-# sigmaG     0.10   0.07       0.00       0.19   280 1.03
-# sigmaItem  0.54   0.05       0.47       0.62  1205 1.00
+# mean   sd  5.5% 94.5% n_eff Rhat
+# bS        -0.09 0.06 -0.19  0.01   939 1.00
+# b_o       -0.07 0.06 -0.16  0.02   993 1.00
+# bI         0.46 0.06  0.37  0.56   777 1.00
+# bL         0.67 0.06  0.57  0.77  1206 1.00
+# bN        -0.08 0.14 -0.31  0.14   886 1.00
+# bIn        0.29 0.15  0.05  0.55  1347 1.00
+# bInl       0.42 0.20  0.11  0.73  1364 1.00
+# bSx        0.16 0.12 -0.04  0.35   835 1.00
+# bA         0.16 0.08  0.03  0.29   795 1.00
+# sigmaID    0.39 0.04  0.32  0.46   913 1.00
+# sigmaR     0.77 0.04  0.70  0.84   999 1.00
+# sigmaG     0.09 0.07  0.01  0.22   261 1.01
+# sigmaItem  0.54 0.05  0.47  0.62  1133 1.00
 
 plot(precis(pMFULL))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 # WAIC pWAIC dWAIC weight     SE   dSE
-# pMFull     11034.1 202.0   0.0   0.65 124.13    NA
-# pM_Apriori 11035.3 202.4   1.2   0.35 123.65  4.40
-# pM_null    11053.3 222.8  19.2   0.00 123.63 11.45
-# pM_exp     11054.7 223.4  20.6   0.00 123.92 10.74
+# pMFull     11055.4 177.0   0.0   0.63 119.61    NA
+# pM_Apriori 11056.4 176.5   1.0   0.37 118.95  5.28
+# pM_exp     11081.7 198.1  26.4   0.00 118.09 13.80
+# pM_null    11084.2 199.2  28.8   0.00 117.62 14.57
 
 
 

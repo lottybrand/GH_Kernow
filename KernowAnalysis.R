@@ -1,7 +1,9 @@
 
-######################### PRESTIGE & DOM MODELS. METRIC FIRST #########################
+######################### THESE ARE THE METRIC VERSIONS OF THE MODELS #########################
 
 library(rethinking)
+
+setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/DataFiles")
 
 
 ############################################################
@@ -398,10 +400,10 @@ compare(DomFull, DomNull, DomAPriori, DomInit)
 #kernowResults$aveInfCS <- scale(kernowResults$aveInf, center = TRUE, scale = TRUE)
 #kernowResults$aveLikCS <- scale(kernowResults$aveLik, center = TRUE, scale = TRUE)
 
-#write.csv(kernowResults,"kernowResults.csv")
+#write.csv(kernowResults,"kernowResults.csv", row.names = FALSE)
+
 kernowResults <- read.csv("kernowResults.csv")
-kernowResults$X.1 <- NULL
-kernowResults$X <- NULL
+
 
 ##### Full Model: 
 
@@ -423,6 +425,10 @@ nominatedFull <- map2stan(
 
 precis(nominatedFull)
 plot(precis(nominatedFull))
+plot(precis(nominatedFull), 
+     pars = c("infR","score","sex", "conf", "prestige", "Dominance","lik","infl","inLearn","age"),
+     labels = c("Age","Learning model","initially Influential","Likeability","Dominance","Prestige","Confidence","Sex","Score","Influence"))
+
 
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 # a         -1.55   0.39      -2.17      -0.96  1800    1
@@ -577,7 +583,6 @@ nomSCORE <- map2stan(
 precis(nomSCORE)
 compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious, nomSCORE)
 
-
 #WAIC pWAIC dWAIC weight    SE   dSE
 #nominatedFull 108.6   9.2   0.0      1 13.43    NA
 #nomSCORE      122.8   2.9  14.3      0 13.22  9.20
@@ -588,5 +593,4 @@ compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevio
 #nomPres       141.0   2.0  32.4      0 12.68 11.46
 #nomLik        142.7   2.3  34.1      0 12.78 11.59
 
-plot(precis(nominatedFull, pars = c("a", "score", "oconf", "prestige", "Dominance", "infR","lik","infl","inLearn","age","sex")))
 
