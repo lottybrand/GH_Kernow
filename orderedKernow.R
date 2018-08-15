@@ -227,11 +227,10 @@ pMFull <- map2stan(
 precis(pMFull)
 plot(precis(pMFull))
 
-plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o"), labels=c("Confidence","Score","Sex","Age","Learning model","Initially influential","Likeability","Influence"))
+plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o","bN"), labels=c("Nominated","Confidence","Score","Sex","Age","Learning model","Initially influential","Likeability","Influence"))
 
-saveRDS(pMFull, file = "SAVED_pMFULL.rds")
+saveRDS(pMFull, file = "SAVED_pMFuLL.rds")
 save(pMFull, file = "plainSave_pMFULL")
-pMFULL <- readRDS("SAVED_pMFULL.rds")
 
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 # bS        -0.09   0.06      -0.19       0.01  1114 1.00
@@ -420,6 +419,9 @@ dM_FULL <- map2stan(
 
 precis(dM_FULL)
 plot(precis(dM_FULL))
+
+plot(precis(dM_FULL), pars=c("bI","bIn","ba","bsx","bs","b_o","b_n","bInlrn","bL"), labels=c("Likeability","Learning model","Nominated","Confidence","Score","Sex","Age","Initially influential","Influence"))
+
 
 # Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
 # bs        -0.11   0.08      -0.25       0.01   709 1.00
