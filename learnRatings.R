@@ -110,6 +110,14 @@ presLearn <- presLearnLong
 #histPlots
 presLearnPlot <- simplehist(presLearn$prestigeRatings, xlim = c(1,7), xlab = "response")
 
+pL <- ggplot(data=presLearn) +
+  geom_bar(aes(x=prestigeRatings), fill="seagreen") + theme_bw() +
+  theme(text = element_text(size=12), axis.title.y=element_text(margin=margin(0,12,0,0))) +
+  scale_x_continuous(breaks=1:7, labels=c("1","2","3","4","5","6","7")) +
+  scale_y_continuous(limits = c(0,500)) +
+  xlab("Prestige Rating") + ylab("Total Count")
+pL
+
 
 ######
 ###### Dominance Ratings
@@ -135,3 +143,10 @@ domLearn <- domLearnLong
 #histPlots
 domLearnPlot <- simplehist(domLearn$dominanceRatings, xlim = c(1,7), xlab = "response")
 
+dL <- ggplot(data=domLearn) +
+  geom_bar(aes(x=dominanceRatings), fill="seagreen") + theme_bw() +
+  theme(text = element_text(size=12), axis.title.y=element_text(margin=margin(0,12,0,0))) +
+  scale_x_continuous(breaks=1:7, labels=c("1","2","3","4","5","6","7")) +
+  scale_y_continuous(limits=c(0,500)) +
+  xlab("Dominance Rating") + ylab("Total Count")
+dL

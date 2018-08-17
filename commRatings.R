@@ -110,7 +110,7 @@ hist(TMay$dominanceMean)
 
 
 colnames(commRatings)
-
+commRatings$X <- NULL
 commRatings <- commRatings[,1:25]
 colnames(commRatings)
 presComm <- commRatings[,c(1,2,3,4,21,7,22,11,16,17,18,25)]
@@ -122,6 +122,7 @@ presCommLong <- reshape(presComm, times = prestige,
                      varying = prestige,
                      v.names = c("prestigeRatings"), 
                      direction = "long")
+
 
 presCommLong <- presCommLong[order(presCommLong$Rater_ID),]
 colnames(presCommLong)[4] <- "presItem"
@@ -146,7 +147,7 @@ Qplot <- simplehist(Queen$prestigeRatings, xlim = c(1,7), xlab = "response")
 
 ####Comm Prest Ordered 
 
-presComm$itemID <- coerce_index(presComm$presItem)
+presComm$itemID <- coerce_index(as.factor(presComm$presItem))
 presComm$raterID <- coerce_index(presComm$Rater_ID)
 
 commPrestMod <- map2stan(
@@ -165,7 +166,13 @@ commPrestMod <- map2stan(
 
 precis(commPrestMod, depth = 2)
 
-
+pC <- ggplot(data=presComm) +
+  geom_bar(aes(x=prestigeRatings), fill="seagreen") + theme_bw() +
+  theme(text = element_text(size=12), axis.title.y=element_text(margin=margin(0,12,0,0))) +
+  scale_x_continuous(breaks=1:7, labels=c("1","2","3","4","5","6","7")) +
+  scale_y_continuous(limits=c(0,400)) +
+  xlab("Prestige Rating") + ylab("Total Count")
+pC
 
 #####################################
 #####################################
@@ -189,6 +196,16 @@ domComm <- domCommLong
 
 #hists
 domCommPlot <- simplehist(domComm$dominanceRatings, xlim = c(1,7), xlab = "response")
+
+dC <- ggplot(data=domComm) +
+  geom_bar(aes(x=dominanceRatings), fill="seagreen") + theme_bw() +
+  theme(text = element_text(size=12), axis.title.y=element_text(margin=margin(0,12,0,0))) +
+  scale_x_continuous(breaks=1:7, labels=c("1","2","3","4","5","6","7")) +
+  scale_y_continuous(limits=c(0,400)) +
+  xlab("Dominance Rating") + ylab("Total Count")
+dC
+
+
 
 SirDaveD <- domComm[domComm$Name == "David Attenborough",]
 daveDHist <- simplehist(SirDaveD$dominanceRatings, xlim = c(1,7), xlab = "response")

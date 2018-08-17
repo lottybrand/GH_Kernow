@@ -81,6 +81,10 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/")
 #################
 
 pdRatings <- read.csv("pdRatings.csv")
+
+##### WARNING: column "group affiliation" removed for GitHub version to preserve anonymity
+##### thus some column numbers may not match up to the RAW file. 
+
 kernowResults <- read.delim("kernow_results_RAW.txt")
 
 kernowResults[kernowResults == "na"] <- NA
@@ -140,8 +144,8 @@ kernowResults$Age <- as.numeric(as.character(kernowResults$Age))
 kernowResults$AgeCS <- scale(kernowResults$Age, center = TRUE, scale = TRUE)
 
 #misspelt "initial" somewhere along the line..!
-colnames(kernowResults)
-colnames(kernowResults)[17] <- "initial_learn"
+#colnames(kernowResults)
+#colnames(kernowResults)[17] <- "initial_learn"
 
 ####### Use coerce index for group IDs etc  ####
 ##### First for the PD Ratings: 

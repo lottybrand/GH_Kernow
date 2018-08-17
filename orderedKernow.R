@@ -295,12 +295,9 @@ gDomD_NA$itemID <- coerce_index(gDomD_NA$domItem)
 
 #####
 ##### Now you can write and skip to this for model running next time:
-write.csv(gDomD_NA, "gDomD_NA.csv")
+#write.csv(gDomD_NA, "gDomD_NA.csv", row.names = FALSE)
 gDomD_NA <- read.csv("gDomD_NA.csv")
 
-##### remove those extra columns from processing:
-gDomD_NA$X.1 <- NULL
-gDomD_NA$X <- NULL
 
 #####
 #####
@@ -317,18 +314,24 @@ dM_null <- map2stan(
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gDomD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
 
 precis(dM_null)
+# #mean   sd 5.5% 94.5% n_eff Rhat
+# sigmaID   0.80 0.04 0.73  0.87   889    1
+# sigmaR    0.76 0.04 0.69  0.83   989    1
+# sigmaG    0.08 0.06 0.01  0.19   479    1
+# sigmaItem 0.59 0.05 0.51  0.66  1366    1
 
 # A Priori
-dM_aPriori2 <- map2stan(
+dM_aPriori <- map2stan(
   alist(
     dominanceRatings ~ dordlogit(phi, cutpoints),
     phi <- b_o*OverCS + bI*Inflntl +
@@ -348,18 +351,17 @@ dM_aPriori2 <- map2stan(
   control=list(adapt_delta=0.99, max_treedepth=13),
   chains = 3, cores = 3, iter=1200)
 
-precis(dM_aPriori2)
+precis(dM_aPriori)
 
-# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# b_o       0.12   0.07       0.01       0.25   539 1.00
-# bI        0.46   0.07       0.35       0.58   748 1.00
-# sigmaID   0.72   0.05       0.64       0.79   799 1.00
-# sigmaR    0.77   0.04       0.71       0.84   984 1.00
-# sigmaG    0.09   0.07       0.00       0.18   398 1.00
-# sigmaItem 0.58   0.05       0.50       0.66   708 1.01
+# mean   sd 5.5% 94.5% n_eff Rhat
+# b_o       0.12 0.07 0.01  0.24   730 1.00
+# bI        0.46 0.07 0.34  0.57   587 1.00
+# sigmaID   0.72 0.04 0.66  0.79   824 1.00
+# sigmaR    0.77 0.04 0.70  0.85  1252 1.00
+# sigmaG    0.09 0.07 0.01  0.22   371 1.01
+# sigmaItem 0.59 0.05 0.51  0.67   955 1.00
 
-precis(dM_aPriori2)
-plot(precis(dM_aPriori2))
+plot(precis(dM_aPriori))
 
 # initial ratings? (Expl)
 
@@ -369,28 +371,29 @@ dM_exp <- map2stan(
     phi <-  bIn*initInf + bInl*initLrn +
       aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
       aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
-    c(bIn, bInl) ~ dnorm(0,10),
+    c(bIn, bInl) ~ dnorm(0,1),
     aG[grpID] ~ dnorm(0,1),
     aID[ratedID]  ~ dnorm(0,1),
     aR[raterId] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=gDomD_NA, 
   constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
-  chains = 1, cores = 1)
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
 
 precis(dM_exp)
 
-#Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-#bIn       0.72   0.30       0.24       1.20  1000    1
-#bInl      0.13   0.42      -0.56       0.77  1000    1
-#sigmaID   1.10   0.09       0.97       1.24   424    1
-#sigmaR    1.08   0.09       0.94       1.22   405    1
-#sigmaG    0.19   0.15       0.00       0.40   134    1
-#sigmaItem 1.60   0.45       0.94       2.17   501    1
+# mean   sd  5.5% 94.5% n_eff Rhat
+# bIn       0.66 0.21  0.34  0.99   798 1.00
+# bInl      0.11 0.30 -0.37  0.58   829 1.00
+# sigmaID   0.77 0.05  0.70  0.85  1247 1.00
+# sigmaR    0.76 0.05  0.69  0.83   819 1.00
+# sigmaG    0.09 0.07  0.01  0.21   481 1.01
+# sigmaItem 0.58 0.05  0.51  0.67   949 1.00
 
 dM_FULL <- map2stan(
   alist(
@@ -419,27 +422,27 @@ plot(precis(dM_FULL))
 plot(precis(dM_FULL), pars=c("bI","bIn","ba","bsx","bs","b_o","b_n","bInlrn","bL"), labels=c("Likeability","Learning model","Nominated","Confidence","Score","Sex","Age","Initially influential","Influence"))
 
 
-# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# bs        -0.11   0.08      -0.25       0.01   709 1.00
-# b_o        0.09   0.07      -0.03       0.21   748 1.01
-# bI         0.55   0.08       0.43       0.69   735 1.00
-# bL        -0.48   0.08      -0.60      -0.36   863 1.00
-# bIn        0.49   0.20       0.16       0.80   623 1.00
-# bInlrn    -0.08   0.27      -0.51       0.33   750 1.00
-# bsx        0.26   0.17       0.00       0.52   533 1.01
-# ba         0.26   0.10       0.10       0.42   564 1.00
-# b_n        0.04   0.19      -0.25       0.34   860 1.00
-# sigmaID    0.62   0.05       0.55       0.69   821 1.01
-# sigmaR     0.78   0.04       0.71       0.85   773 1.00
-# sigmaG     0.12   0.08       0.00       0.23   260 1.00
-# sigmaItem  0.59   0.05       0.51       0.67  1258 1.00
+# mean   sd  5.5% 94.5% n_eff Rhat
+# bs        -0.11 0.09 -0.24  0.03   797 1.00
+# b_o        0.08 0.08 -0.05  0.20   574 1.00
+# bI         0.55 0.08  0.41  0.68   740 1.00
+# bL        -0.48 0.08 -0.61 -0.35   741 1.00
+# bIn        0.50 0.20  0.17  0.84   828 1.00
+# bInlrn    -0.09 0.27 -0.52  0.37   701 1.00
+# bsx        0.25 0.17 -0.02  0.51   716 1.00
+# ba         0.26 0.10  0.10  0.42   693 1.00
+# b_n        0.04 0.19 -0.27  0.34   757 1.00
+# sigmaID    0.63 0.05  0.56  0.70   898 1.00
+# sigmaR     0.78 0.04  0.71  0.86   785 1.00
+# sigmaG     0.12 0.08  0.01  0.26   288 1.02
+# sigmaItem  0.59 0.05  0.51  0.66  1079 1.00
 
 compare(dM_null, dM_aPriori, dM_exp, dM_FULL)
 # WAIC pWAIC dWAIC weight     SE  dSE
-# dM_FULL    10373.9 227.4   0.0   0.59 114.43   NA
-# dM_aPriori 10375.4 229.1   1.5   0.28 114.52 3.41
-# dM_null    10377.0 232.0   3.1   0.12 114.77 4.88
-# dM_exp     10383.4 234.6   9.5   0.01 114.75 4.10
+# dM_FULL    10394.3 196.7   0.0   0.75 109.21   NA
+# dM_aPriori 10396.6 198.1   2.3   0.23 108.76 7.05
+# dM_exp     10403.0 199.6   8.8   0.01 108.40 8.41
+# dM_null    10403.7 199.9   9.4   0.01 108.29 9.17
 
 saveRDS(dM_FULL, file = "dMFULL.rds")
 
@@ -463,13 +466,28 @@ sexPlot <- plot(kernowResults$Gender, xlab = "Gender", ylab = "Total number of P
 
 plot(kernowResults$Gender)
 
-nomPlot <- ggplot(kernowResults, aes(IndividScore, Nominated)) +
-  stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
-  theme_bw() + theme(text = element_text(size=20), axis.text.x = element_text(colour="blue",size=15), axis.text.y = element_text(colour="blue",size=15)) + 
+nomPlot <- ggplot(kernowResults, aes(avePcs, Nominated)) +
+  stat_summary(fun.y=mean, geom = "point", size = 2, color = 222) +
+  theme_bw() + theme(text = element_text(size=10), axis.text.x = element_text(size=10), axis.text.y = element_text(size=12)) + 
   ylab("Proportion of Nominations") +
-  xlab("Individual Quiz Score") +
+  xlab("perc D") +
   scale_y_continuous(limits=c(0,1))
 nomPlot
+
+nom1<- ggplot(data = kernowResults) + 
+  geom_smooth(mapping = aes(x = avePcs, y = Nominated)) +
+  scale_y_continuous(limits=c(0,1))
+nom1
+
+nom2<- ggplot(data = kernowResults) + 
+  geom_smooth(mapping = aes(x = aveDcs, y = Nominated)) +
+  scale_y_continuous(limits=c(0,1))
+nom2
+
+nom3<- ggplot(data = kernowResults) + 
+  geom_smooth(mapping = aes(x = ScoreCS, y = Nominated)) +
+  scale_y_continuous(limits=c(0,1))
+nom3
 
 presPlot <- ggplot(kernowResults, aes(aveP, initial_influential)) +
   stat_summary(fun.y=mean, position= position_dodge(0.3), geom = "point", size = 4, color = "red") +
@@ -620,3 +638,4 @@ likeSexPlot <- ggplot(kernowResults, aes(factor(Gender), aveLik)) +  geom_violin
   xlab("Gender") + 
   scale_y_continuous(limits=c(0,1))
 likeSexPlot
+

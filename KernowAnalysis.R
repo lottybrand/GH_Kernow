@@ -45,10 +45,10 @@ precis(domComm)
 
 domPrestComm <- map2stan(
   alist(
-    Dprop ~ dnorm(mu, sigma),
-    mu <- a + b_pres*Pprop,
+    Pprop ~ dnorm(mu, sigma),
+    mu <- a + b_dom*Dprop,
     a ~ dnorm(0,1),
-    b_pres ~ dnorm(0,1),
+    b_dom ~ dnorm(0,1),
     sigma ~ dunif(0,10)
   ),
   data=commRatings, constraints=list(sigma_p="lower=0"),
@@ -56,10 +56,11 @@ domPrestComm <- map2stan(
 
 precis(domPrestComm)
 
-#Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-#a       0.82   0.06       0.73       0.91   335    1
-#b_pres -0.52   0.08      -0.66      -0.39   276    1
-#sigma   0.21   0.01       0.19       0.23   632    1
+# mean   sd  5.5% 94.5% n_eff Rhat
+# a      0.86 0.04  0.80  0.92   457    1
+# b_dom -0.44 0.07 -0.55 -0.34   513    1
+# sigma  0.20 0.01  0.18  0.22   573    1
+
 ?gsub
 colnames(commRatings)[2] <- "Name"
 commRatings$name <- gsub("999", 'na', commRatings$Name)
@@ -122,10 +123,10 @@ precis(domLearn)
 
 domPrestLearn <- map2stan(
   alist(
-    Dprop ~ dnorm(mu, sigma),
-    mu <- a + b_pres*Pprop,
-    a ~ dnorm(0,10),
-    b_pres ~ dnorm(0,4),
+    Pprop ~ dnorm(mu, sigma),
+    mu <- a + b_dom*Dprop,
+    a ~ dnorm(0,1),
+    b_dom ~ dnorm(0,1),
     sigma ~ dunif(0,10)
   ),
   data=learnRatings, constraints=list(sigma_p="lower=0"),
@@ -133,10 +134,10 @@ domPrestLearn <- map2stan(
 
 precis(domPrestLearn)
 
-# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-#a       0.48   0.12       0.28       0.65   296 1.00
-#b_pres -0.20   0.15      -0.41       0.05   297 1.00
-#sigma   0.20   0.01       0.18       0.22   371 1.01
+# mean   sd  5.5% 94.5% n_eff Rhat
+# a      0.81 0.02  0.78  0.85   246    1
+# b_dom -0.06 0.05 -0.15  0.02   232    1
+# sigma  0.12 0.01  0.11  0.13   499    1
 
 plot(learnRatings$Dprop ~ learnRatings$Pprop)
 cor.test(learnRatings$Dprop, learnRatings$Pprop)
@@ -430,19 +431,19 @@ plot(precis(nominatedFull),
      labels = c("Age","Learning model","initially Influential","Likeability","Dominance","Prestige","Confidence","Sex","Score","Influence"))
 
 
-# Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
-# a         -1.55   0.39      -2.17      -0.96  1800    1
-# sigma_g    0.08   0.06       0.00       0.15  1800    1
-# score      0.80   0.33       0.27       1.32  1800    1
-# conf       0.26   0.28      -0.19       0.72  1800    1
-# prestige  -0.23   0.40      -0.86       0.40  1800    1
-# Dominance  0.25   0.30      -0.19       0.75  1800    1
-# infR       1.49   0.38       0.94       2.15  1800    1
-# lik       -0.12   0.35      -0.66       0.46  1800    1
-# infl      -0.26   0.66      -1.36       0.74  1800    1
-# inLearn    0.37   0.69      -0.64       1.47  1800    1
-# age        0.00   0.28      -0.46       0.43  1800    1
-# sex       -0.99   0.51      -1.79      -0.21  1800    1
+#             mean   sd  5.5% 94.5% n_eff Rhat
+# a         -1.54 0.40 -2.18 -0.91  1577    1
+# sigma_g    0.08 0.06  0.01  0.19  1800    1
+# score      0.78 0.32  0.27  1.30  1800    1
+# conf       0.24 0.29 -0.23  0.69  1800    1
+# prestige  -0.22 0.42 -0.90  0.45  1800    1
+# Dominance  0.23 0.31 -0.26  0.72  1800    1
+# infR       1.50 0.38  0.94  2.15  1800    1
+# lik       -0.13 0.36 -0.70  0.44  1800    1
+# infl      -0.27 0.64 -1.30  0.71  1800    1
+# inLearn    0.42 0.70 -0.69  1.55  1800    1
+# age        0.00 0.29 -0.46  0.47  1800    1
+# sex       -1.00 0.49 -1.77 -0.18  1800    1
 
 ####### Null Model: 
 
@@ -583,7 +584,7 @@ nomSCORE <- map2stan(
 precis(nomSCORE)
 compare(nominatedNull, nominatedFull, nomDom, nomPres, nomInf, nomLik, nomPrevious, nomSCORE)
 
-#WAIC pWAIC dWAIC weight    SE   dSE
+#               WAIC pWAIC dWAIC weight    SE   dSE
 #nominatedFull 108.6   9.2   0.0      1 13.43    NA
 #nomSCORE      122.8   2.9  14.3      0 13.22  9.20
 #nomInf        130.3   1.3  21.7      0 11.00  9.97
