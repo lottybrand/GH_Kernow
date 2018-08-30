@@ -88,10 +88,13 @@ cor.test(learnRatings$Pprop, learnRatings$Dprop)
 ############################
 ###########################
 
+learnRatings <- read.csv("learnRatings.csv")
 
 colnames(learnRatings)
 learnRatings <- learnRatings[,2:26]
 colnames(learnRatings)
+
+## Prestige first:
 presLearn <- learnRatings[,c(1,2,3,4,21,7,22,11,16,17,18,25)]
 
 
@@ -119,10 +122,8 @@ pL <- ggplot(data=presLearn) +
 pL
 
 
-######
-###### Dominance Ratings
-######
-######
+
+###### Now Dominance:
 colnames(learnRatings)
 
 domLearn <- learnRatings[,c(1,2,3,6,8,10,12,23,14,24,19)]
@@ -136,9 +137,60 @@ domLearnLong <- reshape(domLearn, times = dominance,
                          direction = "long")
 
 domLearnLong <- domLearnLong[order(domLearnLong$RATER_ID),]
-colnames(presLearnLong)[4] <- "domItem"
+colnames(domLearnLong)[4] <- "domItem"
 
 domLearn <- domLearnLong
+
+
+
+learnRatings<- read.csv("learnRatings.csv")
+#might need to do own indexing the old way:
+
+
+NItems = length(unique(domLearn$domItem))
+OldItems <- domLearn$domItem
+ItemID <- array(0,length(domLearn$domItem))
+for (index in 1:NItems){
+  ItemID[OldItems == unique(OldItems)[index]] = index
+}
+domLearn$itemID <- ItemID
+
+Nrater = length(unique(domLearn$RATER_ID))
+OldRater <- domLearn$RATER_ID
+RaterID <- array(0,length(domLearn$RATER_ID))
+for (index in 1:Nrater){
+  RaterID[OldRater == unique(OldRater)[index]] = index
+}
+domLearn$raterID <- RaterID
+
+#presComm$itemID <- coerce_index(as.factor(presComm$presItem))
+#presComm$raterID <- coerce_index(presComm$Rater_ID)
+
+domLearn$propP <- learnRatings$Pprop[match(domLearn$RATER_ID, learnRatings$RATER_ID)]
+
+learnDomMod <- map2stan(
+  alist(
+    dominanceRatings ~ dordlogit(phi, cutpoints),
+    phi <- bp*propP + aR[raterID]*sigmaR + aItem[itemID]*sigmaItem,
+    bp ~ dnorm(0,1),
+    aR[raterID] ~ dnorm(0,1),
+    aItem[itemID] ~ dnorm(0,1),
+    c(sigmaR, sigmaItem) ~ normal(0,0.1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=domLearn, 
+  constraints = list(sigmaR = "lower=0", sigmaItem = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 1, cores = 1)
+
+precis(learnDomMod)
+
+# #mean   sd  5.5% 94.5% n_eff Rhat
+# bp        -0.84 0.63 -1.88  0.14   427    1
+# sigmaR     0.91 0.06  0.82  1.00  1000    1
+# sigmaItem  0.49 0.05  0.41  0.57   592    1
+
+
 
 #histPlots
 domLearnPlot <- simplehist(domLearn$dominanceRatings, xlim = c(1,7), xlab = "response")

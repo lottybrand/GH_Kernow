@@ -6,7 +6,7 @@
 #### Preparing commRatings file 
 #commRatings <- read.delim("comm_influence.txt")
 
-
+#####
 ### Calculate p&d scores
 ### Reverse score items 2,6,10,12,17 as according to Cheng et al. 2013 (should really write a function for this..!!)
 
@@ -77,6 +77,8 @@ library(dplyr)
 library(psy)
 library(rethinking)
 
+#setwd("~/Desktop/Postdoc/CornwallCommunityStudy/Results/Kernow/DataFiles")
+
 commRatings <- read.csv("commRatings.csv")
 
 #cronbach test stuff
@@ -129,42 +131,58 @@ colnames(presCommLong)[4] <- "presItem"
 colnames(presCommLong)[2] <- "Name"
 presComm <- presCommLong
 
-#histPlots
-presCommPlot <- simplehist(presComm$prestigeRatings, xlim = c(1,7), xlab = "response")
 
-SirDave <- presComm[presComm$Name == "David Attenborough",]
-daveHist <- simplehist(SirDave$prestigeRatings, xlim = c(1,7), xlab = "response")
+#####
+#####Comm Prest Ordered logit
+#####
 
-TMay <- presComm[presComm$Name == "Theresa May",]
-TMay <- simplehist(TMay$prestigeRatings, xlim = c(1,7), xlab = "response")
-
-table(presComm$Name)
-queenNames <- c("The Queen", "Queen Elizabeth", "Queen")
-Queen <- presComm[presComm$Name %in% queenNames,]
-
-Qplot <- simplehist(Queen$prestigeRatings, xlim = c(1,7), xlab = "response")
+commRatings<- read.csv("commRatings.csv")
+#might need to do own indexing the old way:
 
 
-####Comm Prest Ordered 
+NItems = length(unique(presComm$presItem))
+OldItems <- presComm$presItem
+ItemID <- array(0,length(presComm$presItem))
+for (index in 1:NItems){
+  ItemID[OldItems == unique(OldItems)[index]] = index
+}
+presComm$itemID <- ItemID
 
-presComm$itemID <- coerce_index(as.factor(presComm$presItem))
-presComm$raterID <- coerce_index(presComm$Rater_ID)
+Nrater = length(unique(presComm$Rater_ID))
+OldRater <- presComm$Rater_ID
+RaterID <- array(0,length(presComm$Rater_ID))
+for (index in 1:Nrater){
+  RaterID[OldRater == unique(OldRater)[index]] = index
+}
+presComm$raterID <- RaterID
+
+#presComm$itemID <- coerce_index(as.factor(presComm$presItem))
+#presComm$raterID <- coerce_index(presComm$Rater_ID)
+
+presComm$propD <- commRatings$Dprop[match(presComm$Rater_ID, commRatings$Rater_ID)]
 
 commPrestMod <- map2stan(
   alist(
     prestigeRatings ~ dordlogit(phi, cutpoints),
-    phi <- aR[raterID]*sigmaR + aItem[itemID]*sigmaItem,
+    phi <- bd*propD + aR[raterID]*sigmaR + aItem[itemID]*sigmaItem,
+    bd ~ dnorm(0,1),
     aR[raterID] ~ dnorm(0,1),
     aItem[itemID] ~ dnorm(0,1),
-    c(sigmaR, sigmaItem) ~ dcauchy(0,1),
+    c(sigmaR, sigmaItem) ~ normal(0,0.1),
     cutpoints ~ dnorm(0,10)
   ),
   data=presComm, 
-  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
+  constraints = list(sigmaR = "lower=0", sigmaItem = "lower=0"),
   start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
   chains = 1, cores = 1)
 
-precis(commPrestMod, depth = 2)
+precis(commPrestMod)
+
+# #mean   sd  5.5% 94.5% n_eff Rhat
+# bd        -3.07 0.34 -3.62 -2.54   293    1
+# sigmaR     0.92 0.06  0.84  1.02   495    1
+# sigmaItem  0.31 0.05  0.23  0.39   725    1
+
 
 pC <- ggplot(data=presComm) +
   geom_bar(aes(x=prestigeRatings), fill="seagreen") + theme_bw() +
@@ -181,7 +199,12 @@ pC
 #####################################
 
 colnames(commRatings)
-domComm <- commRatings[,c(2,3,4,7,9,11,13,24,15,25,20)]
+commRatings$X <- NULL
+commRatings <- commRatings[,1:25]
+colnames(commRatings)
+
+colnames(commRatings)
+domComm <- commRatings[,c(1,2,3,6,8,10,12,23,14,24,19)]
 
 dominance <- c("R3", "R5","R7","R9","R10rev","R11","R12rev","R16")
 
@@ -193,6 +216,54 @@ domCommLong <- reshape(domComm, times = dominance,
 domCommLong <- domCommLong[order(domCommLong$Rater_ID),]
 colnames(domCommLong)[4] <- "domItem"
 domComm <- domCommLong
+
+
+commRatings<- read.csv("commRatings.csv")
+#might need to do own indexing the old way:
+
+
+NItems = length(unique(domComm$domItem))
+OldItems <- domComm$domItem
+ItemID <- array(0,length(domComm$domItem))
+for (index in 1:NItems){
+  ItemID[OldItems == unique(OldItems)[index]] = index
+}
+domComm$itemID <- ItemID
+
+Nrater = length(unique(domComm$Rater_ID))
+OldRater <- domComm$Rater_ID
+RaterID <- array(0,length(domComm$Rater_ID))
+for (index in 1:Nrater){
+  RaterID[OldRater == unique(OldRater)[index]] = index
+}
+domComm$raterID <- RaterID
+
+#presComm$itemID <- coerce_index(as.factor(presComm$presItem))
+#presComm$raterID <- coerce_index(presComm$Rater_ID)
+
+domComm$propP <- commRatings$Pprop[match(domComm$Rater_ID, commRatings$Rater_ID)]
+
+commDomMod <- map2stan(
+  alist(
+    dominanceRatings ~ dordlogit(phi, cutpoints),
+    phi <- bp*propP + aR[raterID]*sigmaR + aItem[itemID]*sigmaItem,
+    bp ~ dnorm(0,1),
+    aR[raterID] ~ dnorm(0,1),
+    aItem[itemID] ~ dnorm(0,1),
+    c(sigmaR, sigmaItem) ~ normal(0,0.1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=domComm, 
+  constraints = list(sigmaR = "lower=0", sigmaItem = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  chains = 1, cores = 1)
+
+precis(commDomMod)
+
+# #mean   sd  5.5% 94.5% n_eff Rhat
+# bp        -3.22 0.38 -3.86 -2.61   289    1
+# sigmaR     0.85 0.05  0.76  0.94   652    1
+# sigmaItem  0.45 0.05  0.38  0.54   465    1
 
 #hists
 domCommPlot <- simplehist(domComm$dominanceRatings, xlim = c(1,7), xlab = "response")
@@ -221,4 +292,20 @@ Qplot <- simplehist(Queen$prestigeRatings, xlim = c(1,7), xlab = "response")
 
 ##### cumulative likelihood plot more useful here than model?
 
+####hist plots for presentation
 
+
+#histPlots
+presCommPlot <- simplehist(presComm$prestigeRatings, xlim = c(1,7), xlab = "response")
+
+SirDave <- presComm[presComm$Name == "David Attenborough",]
+daveHist <- simplehist(SirDave$prestigeRatings, xlim = c(1,7), xlab = "response")
+
+TMay <- presComm[presComm$Name == "Theresa May",]
+TMay <- simplehist(TMay$prestigeRatings, xlim = c(1,7), xlab = "response")
+
+table(presComm$Name)
+queenNames <- c("The Queen", "Queen Elizabeth", "Queen")
+Queen <- presComm[presComm$Name %in% queenNames,]
+
+Qplot <- simplehist(Queen$prestigeRatings, xlim = c(1,7), xlab = "response")

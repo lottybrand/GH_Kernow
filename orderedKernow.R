@@ -448,6 +448,40 @@ saveRDS(dM_FULL, file = "dMFULL.rds")
 
 dM_FULL <- readRDS("SAVED_dMFULL.rds")
 
+
+
+###### is dominance predicted by prestige score?
+gDomD_NA$aveP <- kernowResults$aveP[match(gDomD_NA$rated_ID, kernowResults$ID)]
+
+#dominance - prestige independence model
+dM_prest <- map2stan(
+  alist(
+    dominanceRatings ~ dordlogit(phi, cutpoints),
+    phi <- bp*aveP + aID[ratedID]*sigmaID + aR[raterId]*sigmaR +
+      aG[grpID]*sigmaG + aItem[itemID]*sigmaItem,
+    bp ~ dnorm(0,1),
+    aG[grpID] ~ dnorm(0,1),
+    aID[ratedID]  ~ dnorm(0,1),
+    aR[raterId] ~ dnorm(0,1),
+    aItem[itemID] ~ dnorm(0,1),
+    c(sigmaID, sigmaR, sigmaG, sigmaItem) ~ normal(0,0.1),
+    cutpoints ~ dnorm(0,10)
+  ),
+  data=gDomD_NA, 
+  constraints = list(sigmaID = "lower=0", sigmaR = "lower=0", sigmaG = "lower=0", sigmaItem = "lower=0"),
+  start = list(cutpoints=c(-2,-1,0,1,2,2.5)),
+  control=list(adapt_delta=0.99, max_treedepth=13),
+  chains = 3, cores = 3, iter=1200)
+
+precis(dM_prest)
+# mean   sd  5.5% 94.5% n_eff Rhat
+# bp        0.71 0.62 -0.27  1.69   535 1.01
+# sigmaID   0.79 0.05  0.72  0.86   589 1.00
+# sigmaR    0.76 0.04  0.69  0.84   970 1.01
+# sigmaG    0.08 0.06  0.00  0.19   392 1.01
+# sigmaItem 0.59 0.05  0.52  0.67   862 1.01
+
+
 ########
 ##### PLOTTING for public engagement event
 ###### experimental plotting
