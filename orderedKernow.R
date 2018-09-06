@@ -481,6 +481,15 @@ precis(dM_prest)
 # sigmaG    0.08 0.06  0.00  0.19   392 1.01
 # sigmaItem 0.59 0.05  0.52  0.67   862 1.01
 
+#precis with cutpoints (depth = 2) but minus the varying intercepts (=129!!)
+# mean   sd  5.5% 94.5% n_eff Rhat
+# cutpoints[1] -0.31 0.54 -1.17  0.56   797 1.01
+# cutpoints[2]  1.09 0.54  0.24  1.96   799 1.01
+# cutpoints[3]  1.99 0.54  1.14  2.87   800 1.01
+# cutpoints[4]  3.06 0.54  2.20  3.95   802 1.01
+# cutpoints[5]  4.00 0.54  3.15  4.89   816 1.01
+# cutpoints[6]  5.28 0.55  4.42  6.16   828 1.01
+# bp            0.67 0.63 -0.33  1.67   873 1.00
 
 ########
 ##### PLOTTING for public engagement event

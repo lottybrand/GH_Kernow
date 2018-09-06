@@ -190,7 +190,16 @@ precis(learnDomMod)
 # sigmaR     0.91 0.06  0.82  1.00  1000    1
 # sigmaItem  0.49 0.05  0.41  0.57   592    1
 
-
+#precis(learnDomMod, depth=2)
+#cutpoints... (without all varying intercept estimates... aR = 147, aItem = 8... )
+# mean   sd  5.5% 94.5% n_eff Rhat
+# cutpoints[1] -1.81 0.53 -2.63 -0.99   330 1.01
+# cutpoints[2] -0.68 0.53 -1.50  0.15   338 1.01
+# cutpoints[3] -0.03 0.53 -0.89  0.82   342 1.01
+# cutpoints[4]  0.96 0.53  0.11  1.78   343 1.01
+# cutpoints[5]  1.69 0.53  0.82  2.51   344 1.01
+# cutpoints[6]  2.97 0.55  2.08  3.83   353 1.00
+# bp           -0.89 0.61 -1.90  0.07   381 1.00
 
 #histPlots
 domLearnPlot <- simplehist(domLearn$dominanceRatings, xlim = c(1,7), xlab = "response")

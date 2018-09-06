@@ -14,7 +14,7 @@ setwd("~/Desktop/Postdoc/CornwallCommunityStudy/results/Kernow/DataFiles")
 
 commRatings <- read.csv("commRatings.csv")
 commRatings[,1:7] <- NULL
-write.csv(commRatings, "commRatings.csv")
+#write.csv(commRatings, "commRatings.csv")
 
 presComm <- map2stan(
   alist(
@@ -45,21 +45,21 @@ precis(domComm)
 
 domPrestComm <- map2stan(
   alist(
-    Pprop ~ dnorm(mu, sigma),
-    mu <- a + b_dom*Dprop,
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a + b_pres*Pprop,
     a ~ dnorm(0,1),
-    b_dom ~ dnorm(0,1),
+    b_pres ~ dnorm(0,1),
     sigma ~ dunif(0,10)
   ),
   data=commRatings, constraints=list(sigma_p="lower=0"),
   warmup = 1000, iter=2000, chains = 1, cores = 1)
 
 precis(domPrestComm)
-
+# 
 # mean   sd  5.5% 94.5% n_eff Rhat
-# a      0.86 0.04  0.80  0.92   457    1
-# b_dom -0.44 0.07 -0.55 -0.34   513    1
-# sigma  0.20 0.01  0.18  0.22   573    1
+# a       0.82 0.06  0.73  0.92   283    1
+# b_pres -0.53 0.08 -0.66 -0.39   281    1
+# sigma   0.21 0.01  0.19  0.24   446    1
 
 ?gsub
 colnames(commRatings)[2] <- "Name"
@@ -123,10 +123,10 @@ precis(domLearn)
 
 domPrestLearn <- map2stan(
   alist(
-    Pprop ~ dnorm(mu, sigma),
-    mu <- a + b_dom*Dprop,
+    Dprop ~ dnorm(mu, sigma),
+    mu <- a + b_pres*Pprop,
     a ~ dnorm(0,1),
-    b_dom ~ dnorm(0,1),
+    b_pres ~ dnorm(0,1),
     sigma ~ dunif(0,10)
   ),
   data=learnRatings, constraints=list(sigma_p="lower=0"),
@@ -135,9 +135,9 @@ domPrestLearn <- map2stan(
 precis(domPrestLearn)
 
 # mean   sd  5.5% 94.5% n_eff Rhat
-# a      0.81 0.02  0.78  0.85   246    1
-# b_dom -0.06 0.05 -0.15  0.02   232    1
-# sigma  0.12 0.01  0.11  0.13   499    1
+# a       0.47 0.11  0.31  0.65   374    1
+# b_pres -0.18 0.13 -0.40  0.02   381    1
+# sigma   0.20 0.01  0.18  0.22   468    1
 
 plot(learnRatings$Dprop ~ learnRatings$Pprop)
 cor.test(learnRatings$Dprop, learnRatings$Pprop)

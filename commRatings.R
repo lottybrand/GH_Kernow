@@ -183,6 +183,15 @@ precis(commPrestMod)
 # sigmaR     0.92 0.06  0.84  1.02   495    1
 # sigmaItem  0.31 0.05  0.23  0.39   725    1
 
+#precis(commPrestMod, depth=2)
+  # #mean   sd  5.5% 94.5% n_eff Rhat
+  # cutpoints[1] -4.97 0.27 -5.40 -4.55   311    1
+  # cutpoints[2] -3.91 0.26 -4.34 -3.52   298    1
+  # cutpoints[3] -3.23 0.25 -3.64 -2.85   293    1
+  # cutpoints[4] -2.10 0.24 -2.48 -1.73   287    1
+  # cutpoints[5] -1.25 0.24 -1.63 -0.88   291    1
+  # cutpoints[6]  0.25 0.23 -0.11  0.61   290    1
+  # bd           -3.05 0.37 -3.64 -2.51   301    1
 
 pC <- ggplot(data=presComm) +
   geom_bar(aes(x=prestigeRatings), fill="seagreen") + theme_bw() +
@@ -191,6 +200,9 @@ pC <- ggplot(data=presComm) +
   scale_y_continuous(limits=c(0,400)) +
   xlab("Prestige Rating") + ylab("Total Count")
 pC
+
+
+
 
 #####################################
 #####################################
