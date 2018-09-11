@@ -243,13 +243,33 @@ plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o","bN"), 
 # sigmaG     0.09 0.07  0.01  0.22   261 1.01
 # sigmaItem  0.54 0.05  0.47  0.62  1133 1.00
 
-plot(precis(pMFULL))
+plot(precis(pMFull))
 compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 # WAIC pWAIC dWAIC weight     SE   dSE
 # pMFull     11055.4 177.0   0.0   0.63 119.61    NA
 # pM_Apriori 11056.4 176.5   1.0   0.37 118.95  5.28
 # pM_exp     11081.7 198.1  26.4   0.00 118.09 13.80
 # pM_null    11084.2 199.2  28.8   0.00 117.62 14.57
+
+### trying the posterior prediction plots
+
+post <- extract.samples(pMFull)
+
+#kP <- 0:1 # values of propP to calculate over
+kI <- seq(0,1,by = 0.01) # values of Init influence to calculate over
+
+# hard to distinguish lines given they're all blue, use different colors
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "learning model", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "prestige ratings")
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bInl*kI
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kI, pk[,i], col=col.alpha(color_list[i]))
+}
 
 
 
@@ -448,6 +468,25 @@ saveRDS(dM_FULL, file = "dMFULL.rds")
 
 dM_FULL <- readRDS("SAVED_dMFULL.rds")
 
+
+### trying posterior prediction plots
+post <- extract.samples(dM_FULL)
+
+#kP <- 0:1 # values of propP to calculate over
+kL <- seq(-3,3,by = 0.1) # values of Liked to calculate over
+
+# hard to distinguish lines given they're all blue, use different colors
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "liked", ylab = "probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "dominance ratings")
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bL*kL
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kL, pk[,i], col=col.alpha(color_list[i]))
+}
 
 
 ###### is dominance predicted by prestige score?
