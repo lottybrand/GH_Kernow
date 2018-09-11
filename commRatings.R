@@ -184,7 +184,7 @@ precis(commPrestMod)
 # sigmaItem  0.31 0.05  0.23  0.39   725    1
 
 #precis(commPrestMod, depth=2)
-  # #mean   sd  5.5% 94.5% n_eff Rhat
+  #              #mean   sd  5.5% 94.5% n_eff Rhat
   # cutpoints[1] -4.97 0.27 -5.40 -4.55   311    1
   # cutpoints[2] -3.91 0.26 -4.34 -3.52   298    1
   # cutpoints[3] -3.23 0.25 -3.64 -2.85   293    1
@@ -276,6 +276,58 @@ precis(commDomMod)
 # bp        -3.22 0.38 -3.86 -2.61   289    1
 # sigmaR     0.85 0.05  0.76  0.94   652    1
 # sigmaItem  0.45 0.05  0.38  0.54   465    1
+
+precis(commDomMod, depth = 2)
+#               Mean StdDev lower 0.89 upper 0.89 n_eff Rhat
+# cutpoints[1] -3.95   0.32      -4.46      -3.42   350 1.00
+# cutpoints[2] -3.03   0.32      -3.53      -2.50   351 1.00
+# cutpoints[3] -2.47   0.32      -3.04      -2.03   341 1.00
+# cutpoints[4] -1.60   0.31      -2.15      -1.16   351 1.00
+# cutpoints[5] -0.97   0.31      -1.49      -0.54   340 1.00
+# cutpoints[6]  0.20   0.31      -0.30       0.68   352 1.00
+# bp           -3.20   0.40      -3.81      -2.55   369 1.00
+
+# plot posterior predictions? (rethinking p.341)
+post <- extract.samples(commDomMod)
+
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "influence ratings")
+
+#kP <- 0:1 # values of propP to calculate over
+kP <- seq(0,1,by = 0.01) # values of propP to calculate over
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bp*kP
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kP, pk[,i], col=col.alpha(rangi2,0.1))
+}
+
+# hard to distinguish lines given they're all blue, use different colors
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "influence ratings")
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bp*kP
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kP, pk[,i], col=col.alpha(color_list[i]))
+}
+
+# hard to see given uncertainty, so try s=1
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "influence ratings")
+
+for( s in 1:1) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bp*kP
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kP, pk[,i], col=color_list[i])
+}
 
 #hists
 domCommPlot <- simplehist(domComm$dominanceRatings, xlim = c(1,7), xlab = "response")

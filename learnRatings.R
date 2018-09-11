@@ -185,7 +185,7 @@ learnDomMod <- map2stan(
 
 precis(learnDomMod)
 
-# #mean   sd  5.5% 94.5% n_eff Rhat
+#           #mean   sd  5.5% 94.5% n_eff Rhat
 # bp        -0.84 0.63 -1.88  0.14   427    1
 # sigmaR     0.91 0.06  0.82  1.00  1000    1
 # sigmaItem  0.49 0.05  0.41  0.57   592    1
@@ -211,3 +211,46 @@ dL <- ggplot(data=domLearn) +
   scale_y_continuous(limits=c(0,500)) +
   xlab("Dominance Rating") + ylab("Total Count")
 dL
+
+
+# plot posterior predictions? (rethinking p.341)
+post <- extract.samples(learnDomMod)
+
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
+
+kP <- seq(0,1,by = 0.01) # values of propP to calculate over
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bp*kP
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kP, pk[,i], col=col.alpha(rangi2,0.1))
+}
+
+# hard to distinguish lines given they're all blue, use different colors
+color_list <- c("red","orange","yellow","green","blue","violet")
+
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bp*kP
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kP, pk[,i], col=col.alpha(color_list[i]))
+}
+
+# hard to see given uncertainty, so try s=1
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
+
+for( s in 1:1) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bp*kP
+  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kP, pk[,i], col=color_list[i])
+}
