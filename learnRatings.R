@@ -216,41 +216,37 @@ dL
 # plot posterior predictions? (rethinking p.341)
 post <- extract.samples(learnDomMod)
 
-plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
-
 kP <- seq(0,1,by = 0.01) # values of propP to calculate over
 
+# distinguish lines using different colors
+color_list <- c("violet","blue","green","yellow","orange","red")
+
+# show s=100 samples and add thick line for mean, given there's a lot of uncertainty
+png("learning_plot.png", width = 15, height = 15, units = 'cm', res = 300)
+
+plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
+
+pk_means <- matrix(0, nrow = 101, ncol = 6) # values of propP to calculate over
+
 for( s in 1:100) {
   p <- as.data.frame(post)[s,]
   ak <- as.numeric(p[1:6])
   phi <- p$bp*kP
   pk <- pordlogit( 1:6, a=ak, phi=phi)
+  pk_means <- pk_means + pk
   for ( i in 1:6)
-    lines( kP, pk[,i], col=col.alpha(rangi2,0.1))
+    lines( kP, pk[,i], col=col.alpha(color_list[i], alpha = 0.05))
 }
 
-# hard to distinguish lines given they're all blue, use different colors
-color_list <- c("red","orange","yellow","green","blue","violet")
+# add thick lines for means
+for (i in 1:6)
+  lines( kP, pk_means[,i]/101, col = color_list[i], lwd = 3)
 
-plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
-
-for( s in 1:100) {
-  p <- as.data.frame(post)[s,]
-  ak <- as.numeric(p[1:6])
-  phi <- p$bp*kP
-  pk <- pordlogit( 1:6, a=ak, phi=phi)
-  for ( i in 1:6)
-    lines( kP, pk[,i], col=col.alpha(color_list[i]))
-}
-
-# hard to see given uncertainty, so try s=1
-plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
-
-for( s in 1:1) {
-  p <- as.data.frame(post)[s,]
-  ak <- as.numeric(p[1:6])
-  phi <- p$bp*kP
-  pk <- pordlogit( 1:6, a=ak, phi=phi)
-  for ( i in 1:6)
-    lines( kP, pk[,i], col=color_list[i])
-}
+# add labels for numbers
+text(0.9, 0.1, labels = "1")
+text(0.9, 0.4, labels = "2")
+text(0.9, 0.6, labels = "3")
+text(0.9, 0.75, labels = "4")
+text(0.9, 0.88, labels = "5")
+text(0.9, 0.94, labels = "6")
+text(0.9, 1, labels = "7")

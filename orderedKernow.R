@@ -477,7 +477,7 @@ kL <- seq(-3,3,by = 0.1) # values of Liked to calculate over
 
 # hard to distinguish lines given they're all blue, use different colors
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "liked", ylab = "probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "dominance ratings")
+plot(1, 1, type = "n", xlab = "liked", ylab = "probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "dominance ratings")
 
 for( s in 1:100) {
   p <- as.data.frame(post)[s,]
