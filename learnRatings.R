@@ -214,7 +214,7 @@ dL
 
 
 # plot posterior predictions? (rethinking p.341)
-post <- extract.samples(learnDomMod)
+post2 <- extract.samples(learnDomMod)
 
 kP <- seq(0,1,by = 0.01) # values of propP to calculate over
 
@@ -222,7 +222,7 @@ kP <- seq(0,1,by = 0.01) # values of propP to calculate over
 color_list <- c("violet","blue","green","yellow","orange","red")
 
 # show s=100 samples and add thick line for mean, given there's a lot of uncertainty
-png("learning_plot.png", width = 15, height = 15, units = 'cm', res = 300)
+#png("learning_plot.png", width = 15, height = 15, units = 'cm', res = 300)
 
 plot(1, 1, type = "n", xlab = "proportion prestige", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "learning ratings")
 

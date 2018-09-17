@@ -256,19 +256,20 @@ compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 post <- extract.samples(pMFull)
 
 #kP <- 0:1 # values of propP to calculate over
-kI <- seq(0,1,by = 0.01) # values of Init influence to calculate over
-
+kInl <- seq(0,1,by = 0.01) # values of learning model to calculate over
+kI <- seq(-3,3, by = 0.01) # values of influce
+kL <- seq(-3,3,by=0.01) # values of liked
 # hard to distinguish lines given they're all blue, use different colors
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "learning model", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "prestige ratings")
+plot(1, 1, type = "n", xlab = "liked", ylab = "probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,1), main = "prestige ratings")
 
 for( s in 1:100) {
   p <- as.data.frame(post)[s,]
   ak <- as.numeric(p[1:6])
-  phi <- p$bInl*kI
+  phi <- p$bL*kL
   pk <- pordlogit( 1:6, a=ak, phi=phi)
   for ( i in 1:6)
-    lines( kI, pk[,i], col=col.alpha(color_list[i]))
+    lines( kL, pk[,i], col=col.alpha(color_list[i]))
 }
 
 
@@ -474,19 +475,64 @@ post <- extract.samples(dM_FULL)
 
 #kP <- 0:1 # values of propP to calculate over
 kL <- seq(-3,3,by = 0.1) # values of Liked to calculate over
+kI <- seq(-3,3,by=0.1) #values of influence
 
-# hard to distinguish lines given they're all blue, use different colors
+#pL_means <- matrix(0, nrow = 101, ncol = 6) # values of propP to calculate over
+
+# Liked
 color_list <- c("red","orange","yellow","green","blue","violet")
 plot(1, 1, type = "n", xlab = "liked", ylab = "probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "dominance ratings")
+
+pL_means <- matrix(0, nrow = 61, ncol = 6) # values of propP to calculate over
 
 for( s in 1:100) {
   p <- as.data.frame(post)[s,]
   ak <- as.numeric(p[1:6])
   phi <- p$bL*kL
-  pk <- pordlogit( 1:6, a=ak, phi=phi)
+  pL <- pordlogit( 1:6, a=ak, phi=phi)
+  pL_means <- pL_means + pL
   for ( i in 1:6)
-    lines( kL, pk[,i], col=col.alpha(color_list[i]))
+    lines( kL, pL[,i], col=col.alpha(color_list[i], alpha = 0.05))
 }
+
+# add thick lines for means
+for (i in 1:6)
+  lines( kL, pL_means[,i]/101, col = color_list[i], lwd = 3)
+
+# add labels for numbers
+text(0.9, 0.1, labels = "1")
+text(0.9, 0.4, labels = "2")
+text(0.9, 0.6, labels = "3")
+text(0.9, 0.75, labels = "4")
+text(0.9, 0.88, labels = "5")
+text(0.9, 0.94, labels = "6")
+text(0.9, 1, labels = "7")
+
+# Influence
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "influence", ylab = "probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "dominance ratings")
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bI*kI
+  pI <- pordlogit( 1:6, a=ak, phi=phi)
+  for ( i in 1:6)
+    lines( kI, pI[,i], col=col.alpha(color_list[i], alpha = 0.05))
+}
+
+# add thick lines for means
+#for (i in 1:6)
+#  lines( kL, pL_means[,i]/101, col = color_list[i], lwd = 3)
+
+# add labels for numbers
+text(0.9, 0.1, labels = "1")
+text(0.9, 0.4, labels = "2")
+text(0.9, 0.6, labels = "3")
+text(0.9, 0.75, labels = "4")
+text(0.9, 0.88, labels = "5")
+text(0.9, 0.94, labels = "6")
+text(0.9, 1, labels = "7")
 
 
 ###### is dominance predicted by prestige score?
