@@ -259,7 +259,7 @@ post <- extract.samples(pMFull)
 kI <- seq(-3,3,by=0.1) #values of influence
 
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "Influential", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "Prestige Ratings")
+plot(1, 1, type = "n", xlab = "Influential", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Prestige Ratings")
 
 pI_means <- matrix(0, nrow = 61, ncol = 6) 
 
@@ -278,13 +278,13 @@ for (i in 1:6)
   lines( kI, pI_means[,i]/101, col = color_list[i], lwd = 3)
 
 # add labels for numbers
-text(0.9, 0.1, labels = "1")
-text(0.9, 0.4, labels = "2")
-text(0.9, 0.6, labels = "3")
-text(0.9, 0.75, labels = "4")
-text(0.9, 0.88, labels = "5")
-text(0.9, 0.94, labels = "6")
-text(0.9, 1, labels = "7")
+text(-2.4, 0.01, labels = "1")
+text(-2, 0.03, labels = "2")
+text(-1.6, 0.06, labels = "3")
+text(-0.6, 0.1, labels = "4")
+text(0.2, 0.2, labels = "5")
+text(0.9, 0.5, labels = "6")
+text(1.6, 0.8, labels = "7")
 
 
 # Liked
@@ -293,7 +293,7 @@ post <- extract.samples(pMFull)
 kL <- seq(-3,3,by = 0.1) # values of Liked to calculate over
 
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "Liked", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "Prestige Ratings")
+plot(1, 1, type = "n", xlab = "Liked", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Prestige Ratings")
 
 pL_means <- matrix(0, nrow = 61, ncol = 6) 
 
@@ -312,13 +312,13 @@ for (i in 1:6)
   lines( kL, pL_means[,i]/101, col = color_list[i], lwd = 3)
 
 # add labels for numbers
-text(0.9, 0.1, labels = "1")
-text(0.9, 0.4, labels = "2")
-text(0.9, 0.6, labels = "3")
-text(0.9, 0.75, labels = "4")
-text(0.9, 0.88, labels = "5")
-text(0.9, 0.94, labels = "6")
-text(0.9, 1, labels = "7")
+text(-2.4, 0.01, labels = "1")
+text(-2, 0.04, labels = "2")
+text(-1.6, 0.07, labels = "3")
+text(-0.6, 0.1, labels = "4")
+text(0.2, 0.2, labels = "5")
+text(0.9, 0.5, labels = "6")
+text(1.6, 0.8, labels = "7")
 
 
 ############################
@@ -525,7 +525,7 @@ post <- extract.samples(dM_FULL)
 kL <- seq(-3,3,by = 0.1) # values of Liked to calculate over
 
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "Liked", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "Dominance Ratings")
+plot(1, 1, type = "n", xlab = "Liked", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Dominance Ratings")
 
 pL_means <- matrix(0, nrow = 61, ncol = 6) 
 
@@ -544,13 +544,13 @@ for (i in 1:6)
   lines( kL, pL_means[,i]/101, col = color_list[i], lwd = 3)
 
 # add labels for numbers
-text(0.9, 0.1, labels = "1")
-text(0.9, 0.4, labels = "2")
-text(0.9, 0.6, labels = "3")
-text(0.9, 0.75, labels = "4")
-text(0.9, 0.88, labels = "5")
-text(0.9, 0.94, labels = "6")
-text(0.9, 1, labels = "7")
+text(1.5, 0.2, labels = "1")
+text(0, 0.45, labels = "2")
+text(-1.5, 0.6, labels = "3")
+text(-2, 0.78, labels = "4")
+text(-2.2, 0.88, labels = "5")
+text(-2.6, 0.94, labels = "6")
+text(-2.8, 0.99, labels = "7")
 
 ### Influence
 post <- extract.samples(dM_FULL)
@@ -558,7 +558,7 @@ post <- extract.samples(dM_FULL)
 kI <- seq(-3,3,by=0.1) #values of influence
 
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "Influential", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,1), yaxp = c(0,1,2), main = "Dominance Ratings")
+plot(1, 1, type = "n", xlab = "Influential", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Dominance Ratings")
 
 pI_means <- matrix(0, nrow = 61, ncol = 6) 
 
@@ -577,13 +577,13 @@ for (i in 1:6)
   lines( kI, pI_means[,i]/101, col = color_list[i], lwd = 3)
 
 # add labels for numbers
-text(0.9, 0.1, labels = "1")
+text(0, 0.1, labels = "1")
 text(0.9, 0.4, labels = "2")
-text(0.9, 0.6, labels = "3")
-text(0.9, 0.75, labels = "4")
-text(0.9, 0.88, labels = "5")
-text(0.9, 0.94, labels = "6")
-text(0.9, 1, labels = "7")
+text(1.2, 0.6, labels = "3")
+text(2, 0.75, labels = "4")
+text(2.2, 0.88, labels = "5")
+text(2.6, 0.94, labels = "6")
+text(2.8, 1, labels = "7")
 
 
 ###### is dominance predicted by prestige score?
