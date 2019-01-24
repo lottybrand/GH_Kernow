@@ -226,7 +226,7 @@ pMFull <- map2stan(
 precis(pMFull)
 plot(precis(pMFull))
 
-plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o","bN"), labels=c("Nominated","Confidence","Score","Sex","Age","Learning model","Initially influential","Likeability","Influence"))
+plot(precis(pMFull), pars=c("bI","bL","bIn","bInl","bA","bSx","bS","b_o","bN"), labels=c("Nominated","Confidence","Score","Sex","Age","Learning model","Initially influential","Likeability","Influence"), xlab="Parameter Estimate")
 
 # mean   sd  5.5% 94.5% n_eff Rhat
 # bS        -0.09 0.06 -0.19  0.01   939 1.00
@@ -251,16 +251,18 @@ compare(pM_null, pM_Apriori, pM_exp, pMFull, refresh=0.1)
 # pM_exp     11081.7 198.1  26.4   0.00 118.09 13.80
 # pM_null    11084.2 199.2  28.8   0.00 117.62 14.57
 
-### trying the posterior prediction plots
-
+#####
+##### trying the posterior prediction plots
+#####
 ### Influence
 post <- extract.samples(pMFull)
 
 kI <- seq(-3,3,by=0.1) #values of influence
 
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "Influential", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Prestige Ratings")
-
+plot(1, 1, type = "n", xlab = "Influence", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Prestige Ratings")
+abline(h=0, lty=2)
+abline(h=1, lty=2)
 pI_means <- matrix(0, nrow = 61, ncol = 6) 
 
 for( s in 1:100) {
@@ -319,6 +321,67 @@ text(-0.6, 0.1, labels = "4")
 text(0.2, 0.2, labels = "5")
 text(0.9, 0.5, labels = "6")
 text(1.6, 0.8, labels = "7")
+
+
+### learning model:
+post <- extract.samples(pMFull)
+
+kLrn <- 0:1 #learning model
+
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "Learning Model", ylab = "Cumulative Probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "Prestige Ratings")
+
+pLrn_means <- matrix(0, nrow = 2, ncol = 6) 
+
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bInl*kLrn
+  pLrn <- pordlogit( 1:6, a=ak, phi=phi)
+  pLrn_means<- pLrn_means + pLrn
+  for ( i in 1:6)
+    lines( kLrn, pLrn[,i], col=col.alpha(color_list[i], alpha = 0.05))
+}
+
+# add thick lines for means
+for (i in 1:6)
+  lines( kLrn, pLrn_means[,i]/101, col = color_list[i], lwd = 3)
+
+# add labels for numbers
+text(0.4, 0.01, labels = "1")
+text(0.5, 0.02, labels = "2")
+text(0.6, 0.03, labels = "3")
+text(0.7, 0.08, labels = "4")
+text(0.8, 0.2, labels = "5")
+text(0.9, 0.5, labels = "6")
+text(0.9, 0.9, labels = "7")
+
+#### Initial influence model:
+post <- extract.samples(pMFull)
+kInit <- 0:1 #values of influence
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "Initially influential", ylab = "Cumulative Probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "Prestige Ratings")
+pInit_means <- matrix(0, nrow = 2, ncol = 6) 
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bIn*kInit
+  pInit <- pordlogit( 1:6, a=ak, phi=phi)
+  pInit_means<- pInit_means + pInit
+  for ( i in 1:6)
+    lines( kInit, pInit[,i], col=col.alpha(color_list[i], alpha = 0.05))
+}
+# add thick lines for means
+for (i in 1:6)
+  lines( kInit, pInit_means[,i]/101, col = color_list[i], lwd = 3)
+# add labels for numbers
+text(0.2, 0.01, labels = "1")
+text(0.3, 0.02, labels = "2")
+text(0.4, 0.03, labels = "3")
+text(0.5, 0.08, labels = "4")
+text(0.55, 0.2, labels = "5")
+text(0.6, 0.5, labels = "6")
+text(0.7, 0.9, labels = "7")
 
 
 ############################
@@ -487,7 +550,7 @@ dM_FULL <- map2stan(
 precis(dM_FULL)
 plot(precis(dM_FULL))
 
-plot(precis(dM_FULL), pars=c("bI","bIn","ba","bsx","bs","b_o","b_n","bInlrn","bL"), labels=c("Likeability","Learning model","Nominated","Confidence","Score","Sex","Age","Initially influential","Influence"))
+plot(precis(dM_FULL), pars=c("bI","bIn","ba","bsx","bs","b_o","b_n","bInlrn","bL"), labels=c("Likeability","Learning model","Nominated","Confidence","Score","Sex","Age","Initially influential","Influence"), xlab="Parameter Estimate")
 
 
 # mean   sd  5.5% 94.5% n_eff Rhat
@@ -516,9 +579,9 @@ saveRDS(dM_FULL, file = "dMFULL.rds")
 
 dM_FULL <- readRDS("SAVED_dMFULL.rds")
 
-
+#####
 ### trying posterior prediction plots
-
+#####
 # Liked
 post <- extract.samples(dM_FULL)
 
@@ -558,7 +621,9 @@ post <- extract.samples(dM_FULL)
 kI <- seq(-3,3,by=0.1) #values of influence
 
 color_list <- c("red","orange","yellow","green","blue","violet")
-plot(1, 1, type = "n", xlab = "Influential", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Dominance Ratings")
+plot(1, 1, type = "n", xlab = "Influence", ylab = "Cumulative Probability", xlim = c(-3,3), ylim = c(0,1), xaxp = c(-3,3,4), yaxp = c(0,1,2), main = "Dominance Ratings")
+abline(h=0, lty=2)
+abline(h=1, lty=2)
 
 pI_means <- matrix(0, nrow = 61, ncol = 6) 
 
@@ -584,6 +649,64 @@ text(2, 0.75, labels = "4")
 text(2.2, 0.88, labels = "5")
 text(2.6, 0.94, labels = "6")
 text(2.8, 1, labels = "7")
+
+#### Learning model:
+post <- extract.samples(dM_FULL)
+kLrn <- 0:1 #values of influence
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "Learning Model", ylab = "Cumulative Probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "Dominance Ratings")
+pLrn_means <- matrix(0, nrow = 2, ncol = 6) 
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bInlrn*kLrn
+  pLrn <- pordlogit( 1:6, a=ak, phi=phi)
+  pLrn_means<- pLrn_means + pLrn
+  for ( i in 1:6)
+    lines( kLrn, pLrn[,i], col=col.alpha(color_list[i], alpha = 0.05))
+}
+
+# add thick lines for means
+for (i in 1:6)
+  lines( kLrn, pLrn_means[,i]/101, col = color_list[i], lwd = 3)
+
+# add labels for numbers
+text(0.3, 0.1, labels = "1")
+text(0.4, 0.5, labels = "2")
+text(0.5, 0.75, labels = "3")
+text(0.5, 0.88, labels = "4")
+text(0.55, 0.94, labels = "5")
+text(0.6, 0.98, labels = "6")
+text(0.7, 1, labels = "7")
+
+#### Initial influence model:
+post <- extract.samples(dM_FULL)
+kInit <- 0:1 #values of influence
+color_list <- c("red","orange","yellow","green","blue","violet")
+plot(1, 1, type = "n", xlab = "Initially influential", ylab = "Cumulative Probability", xlim = c(0,1), ylim = c(0,1), xaxp = c(0,1,1), yaxp = c(0,1,2), main = "Dominance Ratings")
+pInit_means <- matrix(0, nrow = 2, ncol = 6) 
+for( s in 1:100) {
+  p <- as.data.frame(post)[s,]
+  ak <- as.numeric(p[1:6])
+  phi <- p$bIn*kInit
+  pInit <- pordlogit( 1:6, a=ak, phi=phi)
+  pInit_means<- pInit_means + pInit
+  for ( i in 1:6)
+    lines( kInit, pInit[,i], col=col.alpha(color_list[i], alpha = 0.05))
+}
+
+# add thick lines for means
+for (i in 1:6)
+  lines( kInit, pInit_means[,i]/101, col = color_list[i], lwd = 3)
+
+# add labels for numbers
+text(0.3, 0.1, labels = "1")
+text(0.4, 0.5, labels = "2")
+text(0.5, 0.75, labels = "3")
+text(0.5, 0.88, labels = "4")
+text(0.55, 0.94, labels = "5")
+text(0.6, 0.98, labels = "6")
+text(0.7, 1, labels = "7")
 
 
 ###### is dominance predicted by prestige score?

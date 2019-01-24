@@ -428,7 +428,7 @@ precis(nominatedFull)
 plot(precis(nominatedFull))
 plot(precis(nominatedFull), 
      pars = c("infR","score","sex", "conf", "prestige", "Dominance","lik","infl","inLearn","age"),
-     labels = c("Age","Learning model","initially Influential","Likeability","Dominance","Prestige","Confidence","Sex","Score","Influence"))
+     labels = c("Age","Learning model","initially Influential","Likeability","Dominance","Prestige","Confidence","Sex","Score","Influence"), xlab="Parameter Estimate")
 
 
 #             mean   sd  5.5% 94.5% n_eff Rhat
